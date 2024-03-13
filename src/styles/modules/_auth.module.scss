@@ -1,0 +1,58 @@
+@import "../util/variables";
+
+body {
+    display: flex;
+    justify-content: center;
+}
+
+.container {
+    &-main {
+        margin-top: 15%;
+    }
+
+    &-auth {
+       background-color: $white;
+       border-radius: 0.625rem;
+       margin-top: 1.875rem; 
+       width: 37.5rem;
+       padding: 2.5rem;
+    }
+}
+
+h1 {
+    margin: 0 0 0.625rem 0;
+}
+
+.or {
+    text-align: center;
+    font-weight: $fw-bold;
+    margin-bottom: 1.875rem;
+}
+
+label {
+    margin-bottom: 0.3125rem;
+}
+
+.label-invalid,
+.input-invalid {
+    color: $red;
+}
+
+.input-invalid {
+    border-color: $red;
+}
+
+input {
+    width: 100%;
+    position: relative;
+}
+
+.auth-mode-switcher {
+    color: $purple;
+    font-weight: $fw-semi-bold;
+    margin-left: 0.3125rem;
+
+    &:hover {
+        cursor: pointer;
+    }
+}
