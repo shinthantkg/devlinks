@@ -1,0 +1,115 @@
+@import "util/variables";
+
+html {
+    box-sizing: border-box;
+    font-size: 100%;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: inherit;
+}
+
+body {
+    background-color: $light-gray;
+    font-family: $font;
+    margin: 0;
+    padding: 0;
+}
+
+// Helper Classes
+.block {
+    display: block;
+}
+
+.w {
+    &-100 {
+        width: 100%;
+    }
+}
+
+// Flexbox
+.flex {
+    display: flex;
+
+    &-jc {
+        &-c {
+            justify-content: center;
+        }
+    }
+
+    &-ai {
+        &-c {
+            align-items: center;
+        }
+    }
+
+    &-fd {
+        &-c {
+            flex-direction: column;
+        }
+    }
+}
+
+span {
+    color: $normal-gray;
+}
+
+// Button classes
+.button {
+    border-color: $purple;
+    border-radius: 0.625rem;
+    font-family: $font;
+    font-weight: $fw-bold;
+    font-size: 1rem;
+    margin: 1.875rem 0;
+    padding: 0.9375rem;
+
+    &-clear {
+        background-color: $white;
+        transition: background-color 0.2s, color 0.2s;
+
+        &:hover {
+            background-color: $purple;
+            color: $white;
+        }
+    }
+
+    &-fill {
+        background-color: $purple;
+        color: $white;
+        transition: background-color 0.2s, color 0.2s;
+
+        &:hover {
+            background-color: $white;
+            color: hsl(0, 0%, 0%);
+        }
+    }
+
+    &-icon {
+        margin-right: 0.3125rem;
+    }
+
+    &:hover {
+        cursor: pointer;
+    }
+}
+
+// Forms
+label {
+    color: $normal-gray;
+    display: block;
+    font-weight: $fw-semi-bold;
+    font-size: 0.875rem;
+}
+
+input {
+    border: 1px solid $borders;
+    border-radius: 0.625rem;
+    display: block;
+    font-family: $font;
+    font-size: 1rem;
+    margin-bottom: 1.25rem;
+    padding: 0.9375rem;
+}
