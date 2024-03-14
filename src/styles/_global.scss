@@ -18,6 +18,10 @@ body {
     padding: 0;
 }
 
+#root {
+    width: 100%;
+}
+
 // Helper Classes
 .block {
     display: block;
@@ -33,9 +37,43 @@ body {
 .flex {
     display: flex;
 
+    &-40 {
+        flex: 40%;
+    }
+
+    &-60 {
+        flex: 60%;
+    }
+
+    &-gap {
+        &-5 {
+            gap: 0.3125rem;
+        }
+
+        &-15 {
+            gap: 0.9375rem;
+        }
+
+        &-35 {
+            gap: 2.1875rem;
+        }
+    }
+
     &-jc {
         &-c {
             justify-content: center;
+        }
+
+        &-fe {
+            justify-content: flex-end;
+        }
+
+        &-sa {
+            justify-content: space-around;
+        }
+
+        &-sb {
+            justify-content: space-between;
         }
     }
 
@@ -64,10 +102,11 @@ span {
     font-weight: $fw-bold;
     font-size: 1rem;
     margin: 1.875rem 0;
-    padding: 0.9375rem;
+    padding: 0.9375rem 1.875rem;
 
     &-clear {
         background-color: $white;
+        color: $purple;
         transition: background-color 0.2s, color 0.2s;
 
         &:hover {
@@ -83,8 +122,13 @@ span {
 
         &:hover {
             background-color: $white;
-            color: hsl(0, 0%, 0%);
+            color: $purple;
         }
+    }
+
+    &-add-link {
+        display: block;
+        width: 100%;
     }
 
     &-icon {
@@ -94,6 +138,10 @@ span {
     &:hover {
         cursor: pointer;
     }
+}
+
+.margin-none {
+    margin: 0;
 }
 
 // Forms

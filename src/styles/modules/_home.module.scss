@@ -1,0 +1,80 @@
+@import "../util/variables";
+
+.container {
+  &-home {
+    padding: 1.5%;
+  }
+
+  &-main,
+  &-mockup {
+    background-color: $white;
+    border: 1px solid $borders;
+    border-radius: 1.25rem;
+  }
+
+  &-mockup {
+    padding: 10vh 9vw;
+  }
+
+  &-main { 
+    padding: 3vw;
+  }
+
+  &-links-get-started {
+    background-color: $light-gray;
+    border-radius: 1.25rem;
+    text-align: center;
+    padding: 10vh 11vw;
+  }
+}
+
+.navbar {
+  background-color: $white;
+  border: 1px solid $borders;
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+
+  &-link {
+    color: $normal-gray;
+    font-weight: $fw-semi-bold;
+    transition: cursor 0.2s;
+
+    &:not(:last-of-type) {
+      margin-right: 2.1875rem;
+    }
+
+    &:hover {
+      cursor: pointer;
+    }
+
+    &-active {
+      background-color: $purple-hover-color;
+      border-radius: 0.625rem;
+      padding: 0.9375rem 1.875rem;
+
+      .navbar-link {
+        color: $purple;
+        font-weight: $fw-bold;
+      }
+
+      svg path {
+        fill: $purple;
+      }
+    }
+  }
+}
+
+main {
+    margin-top: 1.875rem;
+}
+
+.mockup-email {
+  color: $normal-gray;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.getting-started {
+    color: $normal-gray;
+    line-height: 1.5;
+}

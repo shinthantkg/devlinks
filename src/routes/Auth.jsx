@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { auth, googleProvider } from "../config/firebase";
+import { auth, googleProvider, db } from "../config/firebase";
 import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from "firebase/auth";
+import { collection, query, orderBy, serverTimestamp } from "firebase/firestore";
 import logo from "../images/logos/logo-devlinks-large.svg";
 import googleIcon from "../images/icons/icon-google.svg";
 import styles from "../styles/modules/_auth.module.scss";
@@ -42,59 +43,99 @@ export default function Auth() {
         return signInMethods.length !== 0;
     }
 
+    function signIn() {
+        checkAccountExistence()
+        .then(exists => {
+            if (exists) {
+                signInWithEmailAndPassword(auth, email, password)
+                    .then(() => {
+                        console.log("yay");
+                    })
+                    .catch(error => {
+                        setInvalidCredentials(true);
+                        setPasswordWrong(true);
+                        console.error(error);
+                    });
+            } else {
+                setInvalidCredentials(true);
+                setAccountExists(false);
+            }
+        })
+        .catch(error => {
+            console.error(error);
+        });
+    }
+
+    function getLatestDocId() {
+        const q = query(collection(db, "profiles"))
+    }    
+
+    function getUser() {
+        auth.onAuthStateChanged(user => {
+            return user;
+        })
+    }
+
+    function createNewProfileDoc() {
+        const latestId = getLatestDocId();
+        const user = getUser();
+
+        if (latestId) {
+            const profileData = {
+                createdAt: serverTimestamp(),
+                id: latestId + 1,
+                email: user.email,
+                name: {
+                    firstName: user.displayName ? user.displayName.split(" ")[0] : null,
+                    lastName: user.displayName ? user.displayName.split(" ")[1] : null
+                },
+                profilePicture: user.photoURL ? user.photoURL : null,
+            }
+
+            
+        }
+    }
+
+    function createAccount() {
+        if (validatePassword()) {
+            if (password === confirmPassword) {
+                checkAccountExistence()
+                    .then(exists => {
+                        if (!exists) {
+                            createUserWithEmailAndPassword(auth, email, password)
+                                .then(() => {
+                                    db.collection("profiles").add({
+                                        id: 
+                                    })
+                                })
+                                .catch(error => {
+                                    console.error(error);
+                                });
+                        } else {
+                            setInvalidCredentials(true);
+                            setAccountExists(true);
+                        }
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+            } else {
+                setInvalidCredentials(true);
+                setConfirmPasswordNotMatching(true);
+            }
+        } else {
+            setInvalidCredentials(true);
+            setInvalidNewPassword(true);
+        }
+    }
+
     async function handleFormSubmission(event) {
         event.preventDefault();
 
         if (isLogin) {
-            checkAccountExistence()
-                .then(exists => {
-                    if (exists) {
-                        signInWithEmailAndPassword(auth, email, password)
-                            .then(() => {
-                                alert("Signed in, thank you Lord Buddha!");
-                            })
-                            .catch(error => {
-                                setInvalidCredentials(true);
-                                setPasswordWrong(true);
-                                console.error(error);
-                            });
-                    } else {
-                        setInvalidCredentials(true);
-                        setAccountExists(false);
-                    }
-                })
-                .catch(error => {
-                    console.error(error);
-                });
+            signIn();
         } else {
-            if (validatePassword()) {
-                if (password === confirmPassword) {
-                    checkAccountExistence()
-                        .then(exists => {
-                            if (!exists) {
-                                createUserWithEmailAndPassword(auth, email, password)
-                                    .then(() => {
-                                        alert("Created account, thank you Lord Buddha!");
-                                    })
-                                    .catch(error => {
-                                        console.error(error);
-                                    });
-                            } else {
-                                setInvalidCredentials(true);
-                                setAccountExists(true);
-                            }
-                        })
-                        .catch(error => {
-                            console.error(error);
-                        });
-                } else {
-                    setInvalidCredentials(true);
-                    setConfirmPasswordNotMatching(true);
-                }
-            } else {
-                setInvalidCredentials(true);
-                setInvalidNewPassword(true);
-            }
+            createAccount();
         }
     }
 
