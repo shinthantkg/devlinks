@@ -96,7 +96,7 @@ span {
 
 // Button classes
 .button {
-    border-color: $purple;
+    border: 1px solid $purple;
     border-radius: 0.625rem;
     font-family: $font;
     font-weight: $fw-bold;
@@ -109,7 +109,7 @@ span {
         color: $purple;
         transition: background-color 0.2s, color 0.2s;
 
-        &:hover {
+        &:not(.button-disabled):hover {
             background-color: $purple;
             color: $white;
         }
@@ -120,10 +120,15 @@ span {
         color: $white;
         transition: background-color 0.2s, color 0.2s;
 
-        &:hover {
+        &:not(.button-disabled):hover {
             background-color: $white;
             color: $purple;
         }
+    }
+
+    &-disabled {
+        background-color: $purple-hover-color;
+        border-color: $purple-hover-color;
     }
 
     &-add-link {
@@ -135,7 +140,7 @@ span {
         margin-right: 0.3125rem;
     }
 
-    &:hover {
+    &:not(.button-disabled):hover {
         cursor: pointer;
     }
 }
@@ -152,12 +157,26 @@ label {
     font-size: 0.875rem;
 }
 
-input {
+input,
+select {
+    background-color: $white;
     border: 1px solid $borders;
     border-radius: 0.625rem;
-    display: block;
     font-family: $font;
-    font-size: 1rem;
-    margin-bottom: 1.25rem;
     padding: 0.9375rem;
+    margin-bottom: 1.25rem;
+    width: 100%;
+}
+
+input {
+    display: block;
+    font-size: 1rem;
+}
+
+select:hover {
+    cursor: pointer;
+}
+
+option {
+    font-size: 1rem;
 }

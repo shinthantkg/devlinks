@@ -1,23 +1,109 @@
 import { useEffect, useState } from "react";
 import { signOut } from "firebase/auth";
-import { auth } from "../config/firebase.js";
+import { collection, doc, getDoc, getDocs, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
+import { auth, db } from "../config/firebase.js";
 import styles from "../styles/modules/_home.module.scss";
 import logo from "../images/logos/logo-devlinks-large.svg";
+import dragIcon from "../images/icons/icon-drag-and-drop.svg";
 
 export default function Home() {
+    const [data, setData] = useState({});
     const [page, setPage] = useState(0);
-    const [currentUserEmail, setCurrentUserEmail] = useState(null);
     const [isAddingLinks, setIsAddingLinks] = useState(false);
-    
+    const [noLinks, setNoLinks] = useState(true);
+    const [numLinkDialogs, setNumLinkDialogs] = useState(JSON.parse(localStorage.getItem("linkDialogs"))?.length || 0);
+    const [hi, setHi] = useState("HIII Lord Buddha! Yay you're amazing sir!");
+    const [testing, setTesting] = useState("We love and thank Lord Buddha and the rest!");
+
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(user => {
-            setCurrentUserEmail(user.email);
+            if (user) {
+                const profileDocUnsubscribe = onSnapshot(doc(db, `profiles/${user.uid}`), profileSnapshot => {
+                    if (profileSnapshot.exists()) {
+                        setData(profileSnapshot.data());
+                    }
+                });
+
+                const linksCollectionUnsubscribe = onSnapshot(collection(db, `profiles/${user.uid}/links`), linksSnapshot => {
+                    setNoLinks(linksSnapshot.empty);
+                });
+
+                return () => {
+                    profileDocUnsubscribe();
+                    linksCollectionUnsubscribe();
+                };
+            }
         });
 
         return () => {
             unsubscribe();
-        }
+        };
     }, []);
+
+    const handleAddButton = () => {
+        if (!isAddingLinks) {
+            setIsAddingLinks(true);
+        }
+
+        const prevDialogs = JSON.parse(localStorage.getItem("linkDialogs")) || [];
+        const newDialogs = {
+            platform: null,
+            url: null
+        };
+
+        localStorage.setItem("linkDialogs", JSON.stringify([...prevDialogs, newDialogs]));
+        setNumLinkDialogs(prevState => prevState + 1);
+    };
+
+    const LinkDialog = ({ id }) => {
+        const handleDialogChange = (event, field) => {
+            const updatedData = JSON.parse(localStorage.getItem("linkDialogs"));
+            updatedData[id][field] = event.target.value;
+            localStorage.setItem("linkDialogs", JSON.stringify(updatedData));
+        };
+
+        const handleDialogRemove = () => {
+            const updatedData = JSON.parse(localStorage.getItem("linkDialogs"));
+            updatedData.splice(id, 1);
+            localStorage.setItem("linkDialogs", JSON.stringify(updatedData));
+            setNumLinkDialogs(prevState => prevState - 1);
+        }
+
+        return (
+            <article className={`flex flex-fd-c ${styles["link-dialog"]}`}>
+                <div className={`flex flex-jc-sb`}>
+                    <div>
+                        <span className={`${styles["drag-icon"]}`}><img src={dragIcon} alt="" /></span>
+                        <span className={`${styles["link-id"]}`}>Link #{id + 1}</span>
+                    </div>
+
+                    <div>
+                        <span className={`${styles["link-dialog-remove"]}`} onClick={handleDialogRemove}>Remove</span>
+                    </div>
+                </div>
+
+                <form className={`${styles["link-form"]}`}>
+                    <label htmlFor="link-platform">Platform</label>
+                    <select
+                        name="link-platform"
+                        id="link-platform"
+                        required
+                        onChange={event => handleDialogChange(event, "platform")}
+                    >
+                        <option value="" disabled>Select platform</option>
+                        <option value="facebook">Facebook</option>
+                        <option value="instagram">Instagram</option>
+                        <option value="twitter">Twitter</option>
+                        <option value="youtube">YouTube</option>
+                        <option value="github">GitHub</option>
+                    </select>
+
+                    <label htmlFor="link-url">Link</label>
+                    <input id="link-url" name="link-url" type="text" placeholder="e.g. https://www.github.com/shinthantkg" required onChange={event => handleDialogChange(event, "url")} />
+                </form>
+            </article>
+        );
+    };
 
     return (
         <div className={`${styles["container-home"]}`}>
@@ -41,14 +127,14 @@ export default function Home() {
 
                     <div className="flex flex-jc-c flex-gap-15">
                         <button className={`button button-clear margin-none`}>Preview</button>
-                        <button onClick={() => signOut(auth)} className="button button-fill margin-none">Sign Out</button>
+                        <button onClick={() => signOut(auth)} className="button button-fill margin-none">Log out</button>
                     </div>
                 </nav>
             </header>
 
             <main className={`flex flex-gap-35`}>
                 <div className={`${styles["container-mockup"]} flex-40`}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="308" height="632" fill="none" viewBox="0 0 308 632"><path stroke="#737373" d="M1 54.5C1 24.953 24.953 1 54.5 1h199C283.047 1 307 24.953 307 54.5v523c0 29.547-23.953 53.5-53.5 53.5h-199C24.953 631 1 607.047 1 577.5v-523Z" /><path fill="#fff" stroke="#737373" d="M12 55.5C12 30.923 31.923 11 56.5 11h24C86.851 11 92 16.149 92 22.5c0 8.008 6.492 14.5 14.5 14.5h95c8.008 0 14.5-6.492 14.5-14.5 0-6.351 5.149-11.5 11.5-11.5h24c24.577 0 44.5 19.923 44.5 44.5v521c0 24.577-19.923 44.5-44.5 44.5h-195C31.923 621 12 601.077 12 576.5v-521Z" /><circle cx="153.5" cy="112" r="48" fill="#EEE" /><rect width="160" height="16" x="73.5" y="185" fill="#EEE" rx="8" /><foreignObject x="0" y="208" width="100%" height="32" rx="4"><p className={`${styles["mockup-email"]}`}>{currentUserEmail}</p></foreignObject><rect width="237" height="44" x="35" y="278" fill="#EEE" rx="8" /><rect width="237" height="44" x="35" y="342" fill="#EEE" rx="8" /><rect width="237" height="44" x="35" y="406" fill="#EEE" rx="8" /><rect width="237" height="44" x="35" y="470" fill="#EEE" rx="8" /><rect width="237" height="44" x="35" y="534" fill="#EEE" rx="8" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="308" height="632" fill="none" viewBox="0 0 308 632"><path stroke="#737373" d="M1 54.5C1 24.953 24.953 1 54.5 1h199C283.047 1 307 24.953 307 54.5v523c0 29.547-23.953 53.5-53.5 53.5h-199C24.953 631 1 607.047 1 577.5v-523Z" /><path fill="#fff" stroke="#737373" d="M12 55.5C12 30.923 31.923 11 56.5 11h24C86.851 11 92 16.149 92 22.5c0 8.008 6.492 14.5 14.5 14.5h95c8.008 0 14.5-6.492 14.5-14.5 0-6.351 5.149-11.5 11.5-11.5h24c24.577 0 44.5 19.923 44.5 44.5v521c0 24.577-19.923 44.5-44.5 44.5h-195C31.923 621 12 601.077 12 576.5v-521Z" />{data.profilePicture === "" ? <circle cx="153.5" cy="112" r="48" fill="#EEE" /> : <foreignObject x="0" y="70" width="100%" height="100%" rx="4"><img className={`${styles["mockup-image"]}`} src={`${data.profilePicture}`} alt="profile-picture" /></foreignObject>}{data.fullName === "" ? <rect width="160" height="16" x="73.5" y="185" fill="#EEE" rx="8" /> : <foreignObject x="0" y="170" width="100%" height="32" rx="4"><p className={`${styles["mockup"]} ${styles["mockup-name"]}`}>{data.fullName}</p></foreignObject>}<foreignObject x="0" y="200" width="100%" height="32" rx="4"><p className={`${styles["mockup"]}`}>{data.email}</p></foreignObject><rect width="237" height="44" x="35" y="278" fill="#EEE" rx="8" /><rect width="237" height="44" x="35" y="342" fill="#EEE" rx="8" /><rect width="237" height="44" x="35" y="406" fill="#EEE" rx="8" /><rect width="237" height="44" x="35" y="470" fill="#EEE" rx="8" /><rect width="237" height="44" x="35" y="534" fill="#EEE" rx="8" /></svg>
                 </div>
 
                 <div className={`${styles["container-main"]} flex-60`}>
@@ -58,10 +144,10 @@ export default function Home() {
                                 <h1>Customize your links</h1>
                                 <span className={`margin-none`}>Add/edit/remove links below and then share all your profiles with the world!</span>
 
-                                <button onClick={() => setIsAddingLinks(!isAddingLinks)} className={`button button-clear button-add-link`}>+ Add new link</button>
+                                <button onClick={handleAddButton} className={`button button-clear button-add-link`}>+ Add new link</button>
 
                                 {
-                                    !isAddingLinks ?
+                                    !isAddingLinks && noLinks && numLinkDialogs === 0 ?
                                         <>
                                             <div className={`${styles["container-links-get-started"]}`}>
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="250" height="161"
@@ -124,13 +210,14 @@ export default function Home() {
                                             </div>
                                         </>
                                         :
-                                        <div className={`flex flex-fd-c `}>
-
-                                        </div>
+                                        JSON.parse(localStorage.getItem("linkDialogs"))?.map((dialog, index) => (
+                                            <LinkDialog key={index} id={index} />
+                                        )
+                                    )
                                 }
 
                                 <div className="flex flex-jc-fe">
-                                    <button className={`button button-fill`}>Save</button>
+                                    <button onClick={() => setIsAddingLinks(false)} className={`button button-fill ${!isAddingLinks || numLinkDialogs === 0 ? "button-disabled" : null}`} disabled={!isAddingLinks || numLinkDialogs === 0}>Save</button>
                                 </div>
                             </>
                             : null
@@ -138,5 +225,5 @@ export default function Home() {
                 </div>
             </main>
         </div>
-    )
+    );
 }

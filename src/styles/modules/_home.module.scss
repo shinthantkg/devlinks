@@ -16,7 +16,7 @@
     padding: 10vh 9vw;
   }
 
-  &-main { 
+  &-main {
     padding: 3vw;
   }
 
@@ -65,16 +65,58 @@
 }
 
 main {
-    margin-top: 1.875rem;
+  margin-top: 1.875rem;
 }
 
-.mockup-email {
+.mockup {
   color: $normal-gray;
-  font-size: 0.875rem;
   text-align: center;
+  font-size: 0.875rem;
+
+  &-name {
+    color: $dark-gray;
+    font-weight: $fw-semi-bold;
+  }
+
+  &-image {
+    border: 3px solid $purple;
+    border-radius: 100%;
+    margin-left: 50%;
+    transform: translateX(-50%);
+  }
 }
 
 .getting-started {
-    color: $normal-gray;
-    line-height: 1.5;
+  color: $normal-gray;
+  line-height: 1.5;
+}
+
+.link {
+  &-dialog {
+    background-color: $light-gray;
+    border-radius: 0.625rem;
+    padding: 0.9375rem 1.25rem;
+
+    &:not(:last-of-type) {
+      margin-bottom: 20px;
+    }
+
+    &-remove {
+      cursor: pointer;
+    }
+  }
+
+  &-id {
+    font-weight: $fw-bold;
+  }
+
+  &-form {
+    margin-top: 1.25rem;
+  }
+}
+
+.drag-icon {
+  margin-right: 0.3125rem;
+  position: relative;
+  bottom: 0.2188rem;
 }

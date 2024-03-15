@@ -11,9 +11,9 @@ export default function App() {
         const unsubscribe = auth.onAuthStateChanged(user => {
             setUser(user);
             if (user) {
-                localStorage.setItem("isAuthenticated", "true"); // Store as string
+                localStorage.setItem("isAuthenticated", "true");
             } else {
-                localStorage.removeItem("isAuthenticated");
+                localStorage.setItem("isAuthenticated", "false");
             }
         });
 
@@ -21,7 +21,6 @@ export default function App() {
             unsubscribe();
         };
     }, []);
-
 
     const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
 

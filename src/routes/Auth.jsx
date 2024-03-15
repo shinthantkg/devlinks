@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { auth, googleProvider, db } from "../config/firebase";
 import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from "firebase/auth";
-import { collection, query, orderBy, serverTimestamp } from "firebase/firestore";
+import { collection, query, orderBy, limit, getDoc, setDoc, getDocs, doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import logo from "../images/logos/logo-devlinks-large.svg";
 import googleIcon from "../images/icons/icon-google.svg";
 import styles from "../styles/modules/_auth.module.scss";
@@ -33,92 +33,112 @@ export default function Auth() {
     async function signInWithGoogle() {
         try {
             await signInWithPopup(auth, googleProvider);
+            const profileDocExists = await checkProfileDocExistence();
+
+            if (!profileDocExists) {
+                await createProfileDoc("google");
+            } else {
+                const currentUser = auth.currentUser;
+                const docRef = doc(db, `profiles/${currentUser.uid}`);
+                const profileDoc = await getDoc(docRef);
+
+                if (profileDoc.data().provider === "email") {
+                    updateDoc(docRef, {
+                        fullName: currentUser.displayName,
+                        profilePicture: currentUser.photoURL,
+                        provider: "google"
+                    });
+                }
+            }
         } catch (error) {
             console.error(error);
         }
     }
 
     async function checkAccountExistence() {
-        const signInMethods = await fetchSignInMethodsForEmail(auth, email);
-        return signInMethods.length !== 0;
+        try {
+            const signInMethods = await fetchSignInMethodsForEmail(auth, email);
+            return signInMethods.length !== 0;
+        } catch (error) {
+            console.error(error);
+        }
     }
 
-    function signIn() {
-        checkAccountExistence()
-        .then(exists => {
+    async function signIn() {
+        try {
+            const exists = await checkAccountExistence();
             if (exists) {
-                signInWithEmailAndPassword(auth, email, password)
-                    .then(() => {
-                        console.log("yay");
-                    })
-                    .catch(error => {
-                        setInvalidCredentials(true);
-                        setPasswordWrong(true);
-                        console.error(error);
-                    });
+                await signInWithEmailAndPassword(auth, email, password);
             } else {
                 setInvalidCredentials(true);
                 setAccountExists(false);
             }
-        })
-        .catch(error => {
+        } catch (error) {
+            setInvalidCredentials(true);
+            setPasswordWrong(true);
             console.error(error);
-        });
-    }
-
-    function getLatestDocId() {
-        const q = query(collection(db, "profiles"))
-    }    
-
-    function getUser() {
-        auth.onAuthStateChanged(user => {
-            return user;
-        })
-    }
-
-    function createNewProfileDoc() {
-        const latestId = getLatestDocId();
-        const user = getUser();
-
-        if (latestId) {
-            const profileData = {
-                createdAt: serverTimestamp(),
-                id: latestId + 1,
-                email: user.email,
-                name: {
-                    firstName: user.displayName ? user.displayName.split(" ")[0] : null,
-                    lastName: user.displayName ? user.displayName.split(" ")[1] : null
-                },
-                profilePicture: user.photoURL ? user.photoURL : null,
-            }
-
-            
         }
     }
 
-    function createAccount() {
+    async function getPreviousDocId() {
+        const q = query(collection(db, "profiles"), orderBy("createdAt", "desc"), limit(1));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            return 0;
+        } else {
+            return querySnapshot.docs[0].data().id;
+        }
+    }
+
+    async function checkProfileDocExistence() {
+        try {
+            const accountId = auth.currentUser.uid;
+            const profileDoc = await getDoc(doc(db, `profiles/${accountId}`));
+
+            return profileDoc.exists();
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    async function createProfileDoc(provider) {
+        const authenticatedUser = auth.currentUser;
+        const previousDocId = await getPreviousDocId();
+
+        if (authenticatedUser) {
+            const profileData = {
+                id: previousDocId + 1,
+                email: authenticatedUser.email,
+                fullName: authenticatedUser.displayName ? authenticatedUser.displayName : "",
+                profilePicture: authenticatedUser.photoURL ? authenticatedUser.photoURL : "",
+                provider: provider,
+                createdAt: serverTimestamp()
+            };
+
+            try {
+                await setDoc(doc(db, `profiles/${authenticatedUser.uid}`), profileData);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+    }
+
+    async function createAccount() {
         if (validatePassword()) {
             if (password === confirmPassword) {
-                checkAccountExistence()
-                    .then(exists => {
-                        if (!exists) {
-                            createUserWithEmailAndPassword(auth, email, password)
-                                .then(() => {
-                                    db.collection("profiles").add({
-                                        id: 
-                                    })
-                                })
-                                .catch(error => {
-                                    console.error(error);
-                                });
-                        } else {
-                            setInvalidCredentials(true);
-                            setAccountExists(true);
-                        }
-                    })
-                    .catch(error => {
-                        console.error(error);
-                    });
+                try {
+                    const exists = await checkAccountExistence();
+                    if (!exists) {
+                        await createUserWithEmailAndPassword(auth, email, password);
+                        await createProfileDoc("email");
+                    } else {
+                        setInvalidCredentials(true);
+                        setAccountExists(true);
+                    }
+                } catch (error) {
+                    console.error(error);
+                }
             } else {
                 setInvalidCredentials(true);
                 setConfirmPasswordNotMatching(true);
@@ -133,9 +153,9 @@ export default function Auth() {
         event.preventDefault();
 
         if (isLogin) {
-            signIn();
+            await signIn();
         } else {
-            createAccount();
+            await createAccount();
         }
     }
 
