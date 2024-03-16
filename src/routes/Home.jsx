@@ -6,8 +6,14 @@ import { auth, db } from "../config/firebase.js";
 import styles from "../styles/modules/_home.module.scss";
 import logo from "../images/logos/logo-devlinks-large.svg";
 import dragIcon from "../images/icons/icon-drag-and-drop.svg";
+import facebookIcon from "../images/icons/icon-facebook.svg";
+import instagramIcon from "../images/icons/icon-instagram.svg";
+import twitterIcon from "../images/icons/icon-twitter.svg";
+import youtubeIcon from "../images/icons/icon-youtube.svg";
+import githubIcon from "../images/icons/icon-github.svg";
 
 export default function Home() {
+    const [rerenderFlag, setRerenderFlag] = useState(false);
     const [profileData, setData] = useState({});
     const [page, setPage] = useState(0);
     const [isAddingLinks, setIsAddingLinks] = useState(false);
@@ -157,7 +163,7 @@ export default function Home() {
                         name="link-platform"
                         id="link-platform"
                         required
-                        onChange={event => handleDialogFieldsChange(event, "platform")}
+                        onChange={event => { handleDialogFieldsChange(event, "platform"); setRerenderFlag(prevFlag => !prevFlag) }}
                     >
                         {
                             platform === "" ?
@@ -246,7 +252,34 @@ export default function Home() {
 
             <main className={`flex flex-gap-35`}>
                 <div className={`${styles["container-mockup"]} flex-40`}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="308" height="632" fill="none" viewBox="0 0 308 632"><path stroke="#737373" d="M1 54.5C1 24.953 24.953 1 54.5 1h199C283.047 1 307 24.953 307 54.5v523c0 29.547-23.953 53.5-53.5 53.5h-199C24.953 631 1 607.047 1 577.5v-523Z" /><path fill="#fff" stroke="#737373" d="M12 55.5C12 30.923 31.923 11 56.5 11h24C86.851 11 92 16.149 92 22.5c0 8.008 6.492 14.5 14.5 14.5h95c8.008 0 14.5-6.492 14.5-14.5 0-6.351 5.149-11.5 11.5-11.5h24c24.577 0 44.5 19.923 44.5 44.5v521c0 24.577-19.923 44.5-44.5 44.5h-195C31.923 621 12 601.077 12 576.5v-521Z" />{profileData.profilePicture === "" ? <circle cx="153.5" cy="112" r="48" fill="#EEE" /> : <foreignObject x="0" y="70" width="100%" height="100%" rx="4"><img className={`${styles["mockup-image"]}`} src={`${profileData.profilePicture}`} alt="profile-picture" /></foreignObject>}{profileData.fullName === "" ? <rect width="160" height="16" x="73.5" y="185" fill="#EEE" rx="8" /> : <foreignObject x="0" y="170" width="100%" height="32" rx="4"><p className={`${styles["mockup"]} ${styles["mockup-name"]}`}>{profileData.fullName}</p></foreignObject>}<foreignObject x="0" y="200" width="100%" height="32" rx="4"><p className={`${styles["mockup"]}`}>{profileData.email}</p></foreignObject><rect width="237" height="44" x="35" y="278" fill="#EEE" rx="8" /><rect width="237" height="44" x="35" y="342" fill="#EEE" rx="8" /><rect width="237" height="44" x="35" y="406" fill="#EEE" rx="8" /><rect width="237" height="44" x="35" y="470" fill="#EEE" rx="8" /><rect width="237" height="44" x="35" y="534" fill="#EEE" rx="8" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="308" height="632" fill="none" viewBox="0 0 308 632"><path stroke="#737373" d="M1 54.5C1 24.953 24.953 1 54.5 1h199C283.047 1 307 24.953 307 54.5v523c0 29.547-23.953 53.5-53.5 53.5h-199C24.953 631 1 607.047 1 577.5v-523Z" /><path fill="#fff" stroke="#737373" d="M12 55.5C12 30.923 31.923 11 56.5 11h24C86.851 11 92 16.149 92 22.5c0 8.008 6.492 14.5 14.5 14.5h95c8.008 0 14.5-6.492 14.5-14.5 0-6.351 5.149-11.5 11.5-11.5h24c24.577 0 44.5 19.923 44.5 44.5v521c0 24.577-19.923 44.5-44.5 44.5h-195C31.923 621 12 601.077 12 576.5v-521Z" />{profileData.profilePicture === "" ? <circle cx="153.5" cy="112" r="48" fill="#EEE" /> : <foreignObject x="0" y="70" width="100%" height="100%" rx="4"><img className={`${styles["mockup-image"]}`} src={`${profileData.profilePicture}`} alt="profile-picture" /></foreignObject>}{profileData.fullName === "" ? <rect width="160" height="16" x="73.5" y="185" fill="#EEE" rx="8" /> : <foreignObject x="0" y="170" width="100%" height="32" rx="4"><p className={`${styles["mockup"]} ${styles["mockup-name"]}`}>{profileData.fullName}</p></foreignObject>}<foreignObject x="0" y="200" width="100%" height="32" rx="4"><p className={`${styles["mockup"]}`}>{profileData.email}</p></foreignObject>{
+                        JSON.parse(localStorage.getItem("linkDialogs"))?.map((linkDialog, index) => (
+                            <foreignObject key={index} x="35" y={278 + 60 * index} width="237" height="60" rx="8">
+                                <a className={`flex flex-ai-c flex-gap-5 ${styles["link-rect"]} ${linkDialog.platform !== "" ? styles[`link-rect-${linkDialog.platform}`] : null}`} href={validateLink(linkDialog.platform, linkDialog.url) ? linkDialog.url : null}>
+                                    {linkDialog.platform !== "" ?
+                                        (() => {
+                                            switch (linkDialog.platform) {
+                                                case "facebook":
+                                                    return (<><img src={facebookIcon} alt="" /> <span>Facebook</span></>);
+
+                                                case "instagram":
+                                                    return (<><img src={instagramIcon} alt="" width="30" height="30" /> <span>Instagram</span></>);
+
+                                                case "twitter":
+                                                    return (<><img src={twitterIcon} alt="" /> <span>Twitter</span></>);
+
+                                                case "youtube":
+                                                    return (<><img src={youtubeIcon} alt="" /> <span>YouTube</span></>)
+
+                                                case "github":
+                                                    return (<><img src={githubIcon} alt="" /> <span>GitHub</span></>)
+                                            }
+                                        })()
+                                        : null}
+                                </a>
+                            </foreignObject>
+                        ))
+                    }</svg>
                 </div>
 
                 <div className={`${styles["container-main"]} flex-60`}>
