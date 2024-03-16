@@ -86,7 +86,6 @@ export default function Home() {
 
         const links = JSON.parse(localStorage.getItem("linkDialogs"));
         if (links) {
-            console.log(links);
             for (let i = 0; i < links.length; i++) {
                 const link = links[i];
                 const linkRef = doc(collection(db, `profiles/${auth.currentUser.uid}/links`), `link-${i + 1}`);
@@ -123,9 +122,6 @@ export default function Home() {
 
             getDoc(linkRef)
                 .then(linkSnapshot => {
-                    console.log(id);
-                    console.log(linkSnapshot.data().platform);
-
                     if (linkSnapshot.exists()) {
                         deleteDoc(linkRef);
                     }
