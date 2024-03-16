@@ -1,8 +1,16 @@
-# React + Vite
+# Devlinks 
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Share as your heart desires! This is the perfect platform for you to setup your presence on the internet!
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Authentication (via Email or Google OAuth) Note: May add more auth providers in the future.
+- Link and profile customizations + integration with Firestore. (WORK IN PROGRESS)
+- Profile sharing. (WORK IN PROGRESS)
+
+## Technologies Used
+
+- ReactJS
+- Google Firebase (Firebase Auth + Firestore)
+- Sass
+- Vite
