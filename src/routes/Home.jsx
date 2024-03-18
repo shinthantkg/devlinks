@@ -83,7 +83,7 @@ export default function Home() {
     const handleLogOut = () => {
         localStorage.removeItem("linkDialogs");
         signOut(auth);
-    }; 
+    };
 
     const handleAddButton = () => {
         /**
@@ -111,15 +111,15 @@ export default function Home() {
     };
 
     const validateLink = (platform, link) => {
-    /**
-     * Validates a link based on the specified platform.
-     *
-     * @param {string} platform The platform for which the link is being validated (e.g., "github", "instagram").
-     * @param {string} link The link to be validated.
-     * @returns {boolean} Returns true if the link matches the expected pattern for the given platform, otherwise false.
-     */
+        /**
+         * Validates a link based on the specified platform.
+         *
+         * @param {string} platform The platform for which the link is being validated (e.g., "github", "instagram").
+         * @param {string} link The link to be validated.
+         * @returns {boolean} Returns true if the link matches the expected pattern for the given platform, otherwise false.
+         */
 
-    // Regular expression patterns for different platforms.
+        // Regular expression patterns for different platforms.
         const patterns = {
             github: /^(?:https?:\/\/)?(?:www\.)?github\.com\/[a-zA-Z0-9_-]+\/?$/,
             instagram: /^(?:https?:\/\/)?(?:www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?$/,
@@ -202,25 +202,46 @@ export default function Home() {
     }
 
     const handleImageUpload = () => {
+        /**
+         * Handles the upload of an image file, performs validation, uploads to storage,
+         * and updates the profile picture URL in the Firestore database.
+         * @function handleImageUpload
+         */
+
+        // Get the file object from the file input
         const file = imageUploadRef.current.files[0];
+
+        // Extract the file extension from the file name
         const fileNameParts = file.name.split(".");
         const fileExtension = fileNameParts[fileNameParts.length - 1];
+
+        // Create a new FileReader instance to read the file contents
         const reader = new FileReader();
 
+        // Callback function triggered when the file is loaded
         reader.onload = event => {
+            // Create a new image element
             const image = new Image();
+            // Set the source of the image to the data URL of the uploaded file
             image.src = event.target.result;
 
+            // Callback function triggered when the image is loaded
             image.onload = () => {
+                // Check if the image dimensions are within the specified limit
                 if (image.width <= 1024 && image.height <= 1024) {
+                    // Create a reference to the location where the image will be stored in Firebase Storage
                     const imageRef = ref(storage, `profilePictures/profile-${auth.currentUser.uid}.${fileExtension}`);
 
+                    // Upload the image file to Firebase Storage
                     uploadBytes(imageRef, file)
                         .then(() => {
+                            // Get the download URL of the uploaded image
                             getDownloadURL(imageRef)
                                 .then(imageUrl => {
+                                    // Get a reference to the user's profile document in Firestore
                                     const profileDocRef = doc(db, `profiles/${auth.currentUser.uid}`);
 
+                                    // Update the profile picture URL in Firestore
                                     updateDoc(profileDocRef, {
                                         "profilePicture": imageUrl
                                     })
@@ -232,7 +253,7 @@ export default function Home() {
                                         })
                                 })
                                 .catch(error => {
-                                    console.error("Error getting image: ", error);
+                                    console.error("Error getting image URL: ", error);
                                 });
                         })
                         .catch(error => {
@@ -244,24 +265,34 @@ export default function Home() {
             };
         };
 
+        // Read the contents of the file as a data URL
         reader.readAsDataURL(file);
     };
 
     const handleSaveProfile = event => {
+        /**
+         * Handles the saving of profile details to Firestore.
+         * @param {Event} event - The event object representing the form submission.
+         * @function handleSaveProfile
+         */
+
+        // Prevent the default form submission behavior
         event.preventDefault();
 
+        // Get a reference to the user's profile document in Firestore
         const profileDocRef = doc(db, `profiles/${auth.currentUser.uid}`);
 
+        // Update the profile details in Firestore
         updateDoc(profileDocRef, {
             email: currentEmail,
             fullName: currentFullName
         })
-        .then(() => {
-            console.log("Successfully updated profile details.");
-        })
-        .catch(error => {
-            console.error("Error updating profile details: ", error);
-        });
+            .then(() => {
+                console.log("Successfully updated profile details.");
+            })
+            .catch(error => {
+                console.error("Error updating profile details: ", error);
+            });
     };
 
     const LinkDialog = ({ id, selectedPlatform, selectedUrl }) => {
