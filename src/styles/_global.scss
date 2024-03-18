@@ -204,3 +204,39 @@ option {
 .hidden {
     display: none;
 }
+
+.navbar {
+    background-color: $white;
+    border: 1px solid $borders;
+    border-radius: 1.25rem;
+    padding: 1.25rem;
+  
+    &-link {
+      color: $normal-gray;
+      font-weight: $fw-semi-bold;
+      transition: cursor 0.2s;
+  
+      &:not(:last-of-type) {
+        margin-right: 2.1875rem;
+      }
+  
+      &:hover {
+        cursor: pointer;
+      }
+  
+      &-active {
+        background-color: $purple-hover-color;
+        border-radius: 0.625rem;
+        padding: 0.9375rem 1.875rem;
+  
+        .navbar-link {
+          color: $purple;
+          font-weight: $fw-bold;
+        }
+  
+        svg path {
+          fill: $purple;
+        }
+      }
+    }
+  }

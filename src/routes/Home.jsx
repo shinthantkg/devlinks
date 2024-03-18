@@ -80,6 +80,10 @@ export default function Home() {
         };
     }, []);
 
+    const handlePreview = () => {
+        window.location.href = `/profile/${profileData.id}`;
+    };
+
     const handleLogOut = () => {
         localStorage.removeItem("linkDialogs");
         signOut(auth);
@@ -432,7 +436,7 @@ export default function Home() {
                     </div>
 
                     <div className="flex flex-jc-c flex-gap-15">
-                        <button className={`button button-clear margin-none`}>Preview</button>
+                        <button className={`button button-clear ${!("id" in profileData) ? "button-disabled" : null} margin-none`} onClick={handlePreview} disabled={!("id" in profileData)}>Preview</button>
                         <button onClick={handleLogOut} className="button button-fill margin-none">Log out</button>
                     </div>
                 </nav>

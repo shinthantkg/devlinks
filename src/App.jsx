@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { auth } from "./config/firebase.js";
 import Auth from "./routes/Auth.jsx";
 import Home from "./routes/Home.jsx";
+import Profile from "./routes/Profile.jsx";
 
 export default function App() {
     const [user, setUser] = useState(null);
@@ -28,6 +29,10 @@ export default function App() {
         {
             path: "/",
             element: isAuthenticated ? <Home /> : <Auth />
+        },
+        {
+            path: "/profile/:profileId",
+            element: <Profile />
         }
     ]);
 

@@ -1,0 +1,65 @@
+@import "../util/variables";
+
+body {
+  background-color: $light-gray;
+}
+
+.header {
+  background-color: $purple;
+  border-radius: 0 0 3.125rem 3.125rem;
+  padding: 3vh 2vw 40vh 2vw;
+}
+
+.card {
+  background-color: $white;
+  box-shadow: -0.0625rem 0.625rem 0.3125rem -0.0625rem hsla(0, 13%, 87%, 0.75);
+  -webkit-box-shadow: -0.0625rem 0.625rem 0.3125rem -0.0625rem hsla(0, 13%, 87%, 0.75);
+  -moz-box-shadow: -0.0625rem 0.625rem 0.3125rem -0.0625rem hsla(0, 13%, 87%, 0.75);
+  border-radius: 0.625rem;
+  padding: 1.875rem 2.5rem;
+  transform: translateY(-50%);
+
+  &-image {
+    border: 0.3125rem solid $purple;
+    border-radius: 100%;
+    width: 9.375rem;
+    height: 9.375rem;
+    margin-bottom: 3.125rem;
+  }
+}
+
+h1 {
+  font-size: 1.875rem;
+}
+
+.link {
+  &-rect {
+    border-radius: 0.625rem;
+    width: 14.8125rem;
+    height: 2.75rem;
+    padding: 0.625rem;
+    margin-top: 0.9375rem;
+
+    span {
+      color: $white;
+      font-size: 0.875rem;
+    }
+
+    &-facebook,
+    &-twitter {
+      background-color: hsl(214, 89%, 52%);
+    }
+
+    &-instagram {
+      background-color: hsl(333, 68%, 50%);
+    }
+
+    &-youtube {
+      background-color: hsl(352, 92%, 36%);
+    }
+
+    &-github {
+      background-color: hsl(0, 0%, 0%);
+    }
+  }
+}
