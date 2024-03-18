@@ -7,6 +7,7 @@ import googleIcon from "../images/icons/icon-google.svg";
 import styles from "../styles/modules/_auth.module.scss";
 
 export default function Auth() {
+    // ALl the statees for the Auth component.
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -18,6 +19,13 @@ export default function Auth() {
     const [confirmPasswordNotMatching, setConfirmPasswordNotMatching] = useState(false);
 
     function resetStates() {
+        /**
+         * Resets all the state indicators related to input field changes.
+         * This function is typically called when an input field's value changes to clear any previous indicators.
+         * Clears indicators for invalid credentials, existing account, incorrect password, invalid new password,
+         * and mismatched confirm password.
+         */
+
         setInvalidCredentials(false);
         setAccountExists(false);
         setPasswordWrong(false);
@@ -25,14 +33,33 @@ export default function Auth() {
         setConfirmPasswordNotMatching(false);
     }
 
+
     function validatePassword() {
+        /**
+          * Validates the password using a regular expression test.
+          * The password must meet the following criteria:
+          * - At least one lowercase letter
+          * - At least one uppercase letter
+          * - At least one digit
+          * - At least one special character among @$!%*?&
+          * - Minimum length of 8 characters
+          * @returns {boolean} true if the password is valid according to the criteria, otherwise false.
+        */
+
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
         return passwordRegex.test(password);
     }
-
     async function signInWithGoogle() {
+        /**
+         * Signs in a user using Firebase authentication's pop-up sign-in method with Google provider.
+         * Creates a new profile document in Firestore database when the account is new.
+         * Converts an already existing account with an email provider to Google provider.
+         * @returns {Promise<void>} A promise that resolves once the sign-in process is completed.
+         */
+
         try {
             await signInWithPopup(auth, googleProvider);
+
             const profileDocExists = await checkProfileDocExistence();
 
             if (!profileDocExists) {
@@ -43,7 +70,7 @@ export default function Auth() {
                 const profileDoc = await getDoc(docRef);
 
                 if (profileDoc.data().provider === "email") {
-                    updateDoc(docRef, {
+                    await updateDoc(docRef, {
                         fullName: currentUser.displayName,
                         profilePicture: currentUser.photoURL,
                         provider: "google"
@@ -56,6 +83,12 @@ export default function Auth() {
     }
 
     async function checkAccountExistence() {
+        /**
+         * Checks if an account exists for the provided email address.
+         * This function queries Firebase authentication to determine if there are any sign-in methods associated with the email.
+         * @returns {Promise<boolean>} A promise that resolves to a boolean value indicating whether an account exists for the provided email.
+         */
+
         try {
             const signInMethods = await fetchSignInMethodsForEmail(auth, email);
             return signInMethods.length !== 0;
@@ -65,6 +98,14 @@ export default function Auth() {
     }
 
     async function signIn() {
+        /**
+         * Attempts to sign in a user with the provided email and password.
+         * This function first checks if an account exists for the provided email address using checkAccountExistence().
+         * If an account exists, it attempts to sign in using the provided email and password.
+         * If no account exists, it sets invalid credentials flag to true and account exists flag to false.
+         * @returns {Promise<void>} A promise that resolves once the sign-in process is completed.
+        */
+
         try {
             const exists = await checkAccountExistence();
             if (exists) {
@@ -81,6 +122,12 @@ export default function Auth() {
     }
 
     async function getPreviousDocId() {
+        /**
+          * Retrieves the ID of the most recently created profile document from the Firestore collection.
+          * @returns {Promise<number|string>} A promise that resolves to the ID of the most recently created profile document,
+          * or 0 if the collection is empty.
+        */
+
         const q = query(collection(db, "profiles"), orderBy("createdAt", "desc"), limit(1));
         const querySnapshot = await getDocs(q);
 
@@ -92,6 +139,11 @@ export default function Auth() {
     }
 
     async function checkProfileDocExistence() {
+        /**
+          * Checks the existence of a profile document associated with the current user in the Firestore database.
+          * @returns {Promise<boolean>} A promise that resolves to true if the profile document exists, otherwise false.
+        */
+
         try {
             const accountId = auth.currentUser.uid;
             const profileDoc = await getDoc(doc(db, `profiles/${accountId}`));
@@ -103,6 +155,12 @@ export default function Auth() {
     }
 
     async function createProfileDoc(provider) {
+        /**
+         * Creates a new profile document for the authenticated user in the Firestore database.
+         * @param {string} provider - The authentication provider used by the user (e.g., "google").
+         * @returns {Promise<void>} A promise that resolves once the profile document is successfully created.
+        */
+
         const authenticatedUser = auth.currentUser;
         const previousDocId = await getPreviousDocId();
 
@@ -150,6 +208,11 @@ export default function Auth() {
     }
 
     async function handleFormSubmission(event) {
+        /**
+          * Creates a new user account with the provided email and password, and creates a profile document in Firestore.
+          * @returns {Promise<void>} A promise that resolves once the account is successfully created.
+        */
+
         event.preventDefault();
 
         if (isLogin) {

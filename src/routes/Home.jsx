@@ -1,8 +1,9 @@
 /* eslint-disable react/prop-types */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { signOut } from "firebase/auth";
-import { collection, doc, deleteDoc, getDoc, getDocs, onSnapshot, setDoc } from "firebase/firestore";
-import { auth, db } from "../config/firebase.js";
+import { collection, doc, getDocs, onSnapshot, updateDoc, writeBatch } from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { auth, db, storage } from "../config/firebase.js";
 import styles from "../styles/modules/_home.module.scss";
 import logo from "../images/logos/logo-devlinks-large.svg";
 import dragIcon from "../images/icons/icon-drag-and-drop.svg";
@@ -13,44 +14,91 @@ import youtubeIcon from "../images/icons/icon-youtube.svg";
 import githubIcon from "../images/icons/icon-github.svg";
 
 export default function Home() {
+    // All the states for the Home component.
+
+    /* eslint-disable-next-line no-unused-vars */
     const [rerenderFlag, setRerenderFlag] = useState(false);
-    const [profileData, setData] = useState({});
+    const [profileData, setProfileData] = useState({});
+    const [currentFullName, setCurrentFullName] = useState(null);
+    const [currentEmail, setCurrentEmail] = useState(null);
     const [page, setPage] = useState(0);
     const [isAddingLinks, setIsAddingLinks] = useState(false);
     const [noLinks, setNoLinks] = useState(true);
-    const [numLinkDialogs, setNumLinkDialogs] = useState(JSON.parse(localStorage.getItem("linkDialogs"))?.length || 0);
+
+    const imageUploadRef = useRef(null);
 
     useEffect(() => {
+        // Listen for changes in authentication state
         const unsubscribe = auth.onAuthStateChanged(user => {
             if (user) {
+                let linksCollectionUnsubscribe;
+
+                // Subscribe to profile document changes
                 const profileDocUnsubscribe = onSnapshot(doc(db, `profiles/${user.uid}`), profileSnapshot => {
                     if (profileSnapshot.exists()) {
-                        setData(profileSnapshot.data());
+                        setProfileData(profileSnapshot.data());
+                        setCurrentFullName(profileSnapshot.data().fullName);
+                        setCurrentEmail(profileSnapshot.data().email);
+
+                        // Subscribe to links collection changes
+                        linksCollectionUnsubscribe = onSnapshot(collection(db, `profiles/${user.uid}/links`), linksSnapshot => {
+                            if (!linksSnapshot.empty) {
+                                const updatedData = [];
+
+                                // Iterate over link documentssetRerenderFlag(prevFlag => !prevFlag);
+                                linksSnapshot.forEach(linkSnapshot => {
+                                    const newLinkData = {
+                                        platform: linkSnapshot.data().platform,
+                                        url: linkSnapshot.data().url
+                                    };
+
+                                    // Update local data array with link data
+                                    updatedData[parseInt(linkSnapshot.id.split("-")[1]) - 1] = newLinkData;
+                                });
+
+                                // Save updated data array to local storage
+                                localStorage.setItem("linkDialogs", JSON.stringify(updatedData));
+                                setNoLinks(linksSnapshot.empty);
+                            }
+                        });
                     }
                 });
 
-                const linksCollectionUnsubscribe = onSnapshot(collection(db, `profiles/${user.uid}/links`), linksSnapshot => {
-                    setNoLinks(linksSnapshot.empty);
-                });
-
+                // Unsubscribe from profile and links collections on component unmount
                 return () => {
                     profileDocUnsubscribe();
-                    linksCollectionUnsubscribe();
+                    if (linksCollectionUnsubscribe) {
+                        linksCollectionUnsubscribe();
+                    }
                 };
             }
         });
 
+        // Unsubscribe from authentication changes on component unmount
         return () => {
             unsubscribe();
         };
     }, []);
 
+    const handleLogOut = () => {
+        localStorage.removeItem("linkDialogs");
+        signOut(auth);
+    }; 
+
     const handleAddButton = () => {
+        /**
+          * Handles the click event of the "Add new link" button.
+          * If adding links is not already in progress, it sets the flag to indicate that
+          * new links are being added. Additionally, if the maximum number of link dialogs
+          * has not been reached, it adds a new link dialog by updating the local storage
+          * and the state.
+          */
+
         if (!isAddingLinks) {
             setIsAddingLinks(true);
         }
 
-        if (numLinkDialogs !== 5) {
+        if (JSON.parse(localStorage.getItem("linkDialogs") || "[]").length !== 5) {
             const prevDialogs = JSON.parse(localStorage.getItem("linkDialogs")) || [];
             const newDialogs = {
                 platform: "",
@@ -58,60 +106,177 @@ export default function Home() {
             };
 
             localStorage.setItem("linkDialogs", JSON.stringify([...prevDialogs, newDialogs]));
-            setNumLinkDialogs(prevState => prevState + 1);
+            setRerenderFlag(prevFlag => !prevFlag);
         }
     };
 
-    function validateLink(platform, link) {
+    const validateLink = (platform, link) => {
+    /**
+     * Validates a link based on the specified platform.
+     *
+     * @param {string} platform The platform for which the link is being validated (e.g., "github", "instagram").
+     * @param {string} link The link to be validated.
+     * @returns {boolean} Returns true if the link matches the expected pattern for the given platform, otherwise false.
+     */
+
+    // Regular expression patterns for different platforms.
         const patterns = {
             github: /^(?:https?:\/\/)?(?:www\.)?github\.com\/[a-zA-Z0-9_-]+\/?$/,
             instagram: /^(?:https?:\/\/)?(?:www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?$/,
             twitter: /^(?:https?:\/\/)?(?:www\.)?twitter\.com\/[a-zA-Z0-9_]+\/?$/,
-            youtube: /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/(?:@)?[a-zA-Z0-9_-]+\/?$/,
+            youtube: /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/@?[a-zA-Z0-9_-]+\/?$/,
             facebook: /^(?:https?:\/\/)?(?:www\.)?facebook\.com\/[a-zA-Z0-9.]+\/?$/,
         };
 
         const regex = new RegExp(patterns[platform], 'i');
         return regex.test(link);
-    }
+    };
+
+    const formatUrl = url => {
+        // Check if the URL starts with "http", if not, add "https://"
+        if (!url.match(/^https?:\/\//i)) {
+            url = "https://" + url;
+        }
+
+        // Extract the domain from the URL
+        const domainMatch = url.match(/^https?:\/\/(?:www\.)?(.+?)\//i);
+        const domain = domainMatch ? domainMatch[1] : '';
+
+        // Check if the domain is not "github.com", if not, return the original URL
+        if (domain.toLowerCase() !== 'github.com') {
+            return url;
+        }
+
+        // Check if the URL contains "www.", if not, add it after "https://"
+        if (!url.match(/^https?:\/\/www\./i)) {
+            url = url.replace(/^https?:\/\//i, "https://www.");
+        }
+
+        return url;
+    };
 
     const saveLinks = async () => {
         const linksCollectionRef = collection(db, `profiles/${auth.currentUser.uid}/links`);
 
         try {
-            // Delete existing documents
+            // Batched delete existing documents
             const linkSnapshots = await getDocs(linksCollectionRef);
-            if (!linkSnapshots.empty) {
-                await Promise.all(linkSnapshots.docs.map(async linkSnapshot => {
-                    await deleteDoc(doc(db, `profiles/${auth.currentUser.uid}/links/${linkSnapshot.id}`));
-                }));
-            }
+            const batch = writeBatch(db);
+            linkSnapshots.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
         } catch (error) {
             console.error("Error deleting existing documents:", error);
         }
 
+        // Retrieve links from local storage and save them to Firestore
         const links = JSON.parse(localStorage.getItem("linkDialogs"));
-        if (links) {
-            for (let i = 0; i < links.length; i++) {
-                const link = links[i];
-                const linkRef = doc(collection(db, `profiles/${auth.currentUser.uid}/links`), `link-${i + 1}`);
 
+        if (links) {
+            const batch = writeBatch(db);
+            links.forEach((link, index) => {
+                const linkRef = doc(linksCollectionRef, `link-${index + 1}`);
                 if (validateLink(link.platform, link.url)) {
                     try {
-                        await setDoc(linkRef, link);
+                        link.url = formatUrl(link.url);
+                        batch.set(linkRef, link);
                     } catch (error) {
                         console.error("Error setting document:", error);
                     }
                 }
+            });
+
+            try {
+                await batch.commit();
+            } catch (error) {
+                console.error("Error committing batch:", error);
             }
         }
+
+        setRerenderFlag(prevFlag => !prevFlag);
+    };
+
+    const handleImageUploadButtonClick = () => {
+        imageUploadRef.current.click();
+    }
+
+    const handleImageUpload = () => {
+        const file = imageUploadRef.current.files[0];
+        const fileNameParts = file.name.split(".");
+        const fileExtension = fileNameParts[fileNameParts.length - 1];
+        const reader = new FileReader();
+
+        reader.onload = event => {
+            const image = new Image();
+            image.src = event.target.result;
+
+            image.onload = () => {
+                if (image.width <= 1024 && image.height <= 1024) {
+                    const imageRef = ref(storage, `profilePictures/profile-${auth.currentUser.uid}.${fileExtension}`);
+
+                    uploadBytes(imageRef, file)
+                        .then(() => {
+                            getDownloadURL(imageRef)
+                                .then(imageUrl => {
+                                    const profileDocRef = doc(db, `profiles/${auth.currentUser.uid}`);
+
+                                    updateDoc(profileDocRef, {
+                                        "profilePicture": imageUrl
+                                    })
+                                        .then(() => {
+                                            console.log("Successfully updated profile picture!");
+                                        })
+                                        .catch(error => {
+                                            console.error("Error updating profile picture: ", error);
+                                        })
+                                })
+                                .catch(error => {
+                                    console.error("Error getting image: ", error);
+                                });
+                        })
+                        .catch(error => {
+                            console.error("Error uploading image: ", error);
+                        });
+                } else {
+                    console.error("Image exceeds the 1024x1024 size limit.");
+                }
+            };
+        };
+
+        reader.readAsDataURL(file);
+    };
+
+    const handleSaveProfile = event => {
+        event.preventDefault();
+
+        const profileDocRef = doc(db, `profiles/${auth.currentUser.uid}`);
+
+        updateDoc(profileDocRef, {
+            email: currentEmail,
+            fullName: currentFullName
+        })
+        .then(() => {
+            console.log("Successfully updated profile details.");
+        })
+        .catch(error => {
+            console.error("Error updating profile details: ", error);
+        });
     };
 
     const LinkDialog = ({ id, selectedPlatform, selectedUrl }) => {
+        // All the states for the LinkDialog component. 
         const [platform, setPlatform] = useState(selectedPlatform);
         const [url, setUrl] = useState(selectedUrl);
 
         const handleDialogFieldsChange = (event, field) => {
+            /**
+             * Handles changes in dialog fields and updates the corresponding data in localStorage.
+            * Also updates state variables if the changed field is "platform" or "url".
+            * @param {Object} event - The event object generated by the field change.
+            * @param {string} field - The field that has been changed ("platform" or "url").
+            */
+
             const updatedData = JSON.parse(localStorage.getItem("linkDialogs"));
             updatedData[id][field] = event.target.value;
             localStorage.setItem("linkDialogs", JSON.stringify(updatedData));
@@ -124,36 +289,28 @@ export default function Home() {
         };
 
         const handleDialogRemove = () => {
-            const linkRef = doc(db, `profiles/${auth.currentUser.uid}/links/link-${id + 1}`);
+            /**
+              * Handles the removal of a dialog.
+              * Deletes the corresponding document from Firestore and updates local storage.
+              */
 
-            getDoc(linkRef)
-                .then(linkSnapshot => {
-                    if (linkSnapshot.exists()) {
-                        deleteDoc(linkRef);
-                    }
-                })
-                .then(() => {
-                    const updatedData = JSON.parse(localStorage.getItem("linkDialogs"));
-                    updatedData.splice(id, 1);
-                    localStorage.setItem("linkDialogs", JSON.stringify(updatedData));
-                    setNumLinkDialogs(prevState => prevState - 1);
-                    saveLinks();
-                })
-                .catch(error => {
-                    console.error("Error removing document or updating local storage: ", error);
-                });
+            const updatedData = JSON.parse(localStorage.getItem("linkDialogs"));
+            updatedData.splice(id, 1);
+            localStorage.setItem("linkDialogs", JSON.stringify(updatedData));
+
+            saveLinks();
         };
 
         return (
-            <article className={`flex flex-fd-c ${styles["link-dialog"]}`}>
+            <article className={`flex flex-fd-c ${styles["dialog"]}`}>
                 <div className={`flex flex-jc-sb`}>
                     <div>
-                        <span className={`${styles["drag-icon"]}`}><img src={dragIcon} alt="" /></span>
-                        <span className={`${styles["link-id"]}`}>Link #{id + 1}</span>
+                        <span className={`${styles["drag-icon"]}`}><img className={`no-select`} src={dragIcon} alt="" /></span>
+                        <span className={`${styles["link-id"]} no-select`}>Link #{id + 1}</span>
                     </div>
 
                     <div>
-                        <span className={`${styles["link-dialog-remove"]}`} onClick={handleDialogRemove}>Remove</span>
+                        <span className={`${styles["dialog-remove"]}`} onClick={handleDialogRemove}>Remove</span>
                     </div>
                 </div>
 
@@ -245,17 +402,17 @@ export default function Home() {
 
                     <div className="flex flex-jc-c flex-gap-15">
                         <button className={`button button-clear margin-none`}>Preview</button>
-                        <button onClick={() => signOut(auth)} className="button button-fill margin-none">Log out</button>
+                        <button onClick={handleLogOut} className="button button-fill margin-none">Log out</button>
                     </div>
                 </nav>
             </header>
 
             <main className={`flex flex-gap-35`}>
                 <div className={`${styles["container-mockup"]} flex-40`}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="308" height="632" fill="none" viewBox="0 0 308 632"><path stroke="#737373" d="M1 54.5C1 24.953 24.953 1 54.5 1h199C283.047 1 307 24.953 307 54.5v523c0 29.547-23.953 53.5-53.5 53.5h-199C24.953 631 1 607.047 1 577.5v-523Z" /><path fill="#fff" stroke="#737373" d="M12 55.5C12 30.923 31.923 11 56.5 11h24C86.851 11 92 16.149 92 22.5c0 8.008 6.492 14.5 14.5 14.5h95c8.008 0 14.5-6.492 14.5-14.5 0-6.351 5.149-11.5 11.5-11.5h24c24.577 0 44.5 19.923 44.5 44.5v521c0 24.577-19.923 44.5-44.5 44.5h-195C31.923 621 12 601.077 12 576.5v-521Z" />{profileData.profilePicture === "" ? <circle cx="153.5" cy="112" r="48" fill="#EEE" /> : <foreignObject x="0" y="70" width="100%" height="100%" rx="4"><img className={`${styles["mockup-image"]}`} src={`${profileData.profilePicture}`} alt="profile-picture" /></foreignObject>}{profileData.fullName === "" ? <rect width="160" height="16" x="73.5" y="185" fill="#EEE" rx="8" /> : <foreignObject x="0" y="170" width="100%" height="32" rx="4"><p className={`${styles["mockup"]} ${styles["mockup-name"]}`}>{profileData.fullName}</p></foreignObject>}<foreignObject x="0" y="200" width="100%" height="32" rx="4"><p className={`${styles["mockup"]}`}>{profileData.email}</p></foreignObject>{
+                    <svg xmlns="http://www.w3.org/2000/svg" width="308" height="632" fill="none" viewBox="0 0 308 632"><path stroke="#737373" d="M1 54.5C1 24.953 24.953 1 54.5 1h199C283.047 1 307 24.953 307 54.5v523c0 29.547-23.953 53.5-53.5 53.5h-199C24.953 631 1 607.047 1 577.5v-523Z" /><path fill="#fff" stroke="#737373" d="M12 55.5C12 30.923 31.923 11 56.5 11h24C86.851 11 92 16.149 92 22.5c0 8.008 6.492 14.5 14.5 14.5h95c8.008 0 14.5-6.492 14.5-14.5 0-6.351 5.149-11.5 11.5-11.5h24c24.577 0 44.5 19.923 44.5 44.5v521c0 24.577-19.923 44.5-44.5 44.5h-195C31.923 621 12 601.077 12 576.5v-521Z" />{profileData.profilePicture === "" ? <circle cx="153.5" cy="112" r="48" fill="#EEE" /> : <foreignObject x="0" y="70" width="100%" height="100%" rx="4"><img className={`${styles["mockup-image"]}`} src={`${profileData.profilePicture}`} alt="profile-picture" /></foreignObject>}{profileData.fullName === "" ? <rect width="160" height="16" x="73.5" y="185" fill="#EEE" rx="8" /> : <foreignObject x="0" y="170" width="100%" height="32" rx="4"><p className={`${styles["mockup"]} ${styles["mockup-name"]} no-select`}>{profileData.fullName}</p></foreignObject>}<foreignObject x="0" y="200" width="100%" height="32" rx="4"><p className={`${styles["mockup"]} no-select`}>{profileData.email}</p></foreignObject>{
                         JSON.parse(localStorage.getItem("linkDialogs"))?.map((linkDialog, index) => (
                             <foreignObject key={index} x="35" y={278 + 60 * index} width="237" height="60" rx="8">
-                                <a className={`flex flex-ai-c flex-gap-5 ${styles["link-rect"]} ${linkDialog.platform !== "" ? styles[`link-rect-${linkDialog.platform}`] : null}`} href={validateLink(linkDialog.platform, linkDialog.url) ? linkDialog.url : null}>
+                                <a className={`flex flex-ai-c flex-gap-5 ${styles["link-rect"]} ${linkDialog.platform !== "" ? styles[`link-rect-${linkDialog.platform}`] : null}`} href={validateLink(linkDialog.platform, linkDialog.url) ? linkDialog.url : null} target={linkDialog.url !== "" ? "_blank" : null}>
                                     {linkDialog.platform !== "" ?
                                         (() => {
                                             switch (linkDialog.platform) {
@@ -292,7 +449,7 @@ export default function Home() {
                                 <button onClick={handleAddButton} className={`button button-clear button-add-link`}>+ Add new link</button>
 
                                 {
-                                    (!isAddingLinks && noLinks && numLinkDialogs === 0) || numLinkDialogs === 0 ?
+                                    ((!isAddingLinks && noLinks) || JSON.parse(localStorage.getItem("linkDialogs") || "[]").length === 0) || JSON.parse(localStorage.getItem("linkDialogs")).length === 0 === 0 ?
                                         <>
                                             <div className={`${styles["container-links-get-started"]}`}>
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="250" height="161"
@@ -362,10 +519,56 @@ export default function Home() {
                                 }
 
                                 <div className="flex flex-jc-fe">
-                                    <button onClick={saveLinks} className={`button button-fill ${!isAddingLinks && numLinkDialogs === 0 ? "button-disabled" : null}`} disabled={!isAddingLinks && numLinkDialogs === 0}>Save</button>
+                                    <button onClick={saveLinks} className={`button button-fill ${!isAddingLinks && JSON.parse(localStorage.getItem("linkDialogs") || "[]").length === 0 ? "button-disabled" : null}`} disabled={!isAddingLinks && JSON.parse(localStorage.getItem("linkDialogs") || "[]").length === 0}>Save</button>
                                 </div>
                             </>
-                            : null
+                            :
+                            <>
+                                <h1>Profile Details</h1>
+                                <span>Add your details to create a personal touch to your profile.</span>
+
+                                <form onSubmit={handleSaveProfile}>
+                                    <div className={`${styles["dialog"]} ${styles["dialog-profile"]} flex flex-jc-sb flex-ai-c flex-gap-150`}>
+                                        <label htmlFor="image-upload">Profile picture</label>
+
+                                        <div className={`flex flex-gap-30 flex-ai-c`}>
+                                            <div className={`${profileData.profilePicture === "" ? styles["button-image-upload"] : null} flex flex-fd-c flex-jc-c flex-ai-c flex-gap-10`} style={profileData.profilePicture !== "" ? { backgroundImage: `url(${profileData.profilePicture})`, backgroundSize: "cover", borderRadius: "0.625rem", cursor: "pointer", width: "12rem", height: "12rem" } : null} onClick={handleImageUploadButtonClick}>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 40 40"><path fill={profileData.profilePicture === "" ? "#633CFF" : "#fff"} d="M33.75 6.25H6.25a2.5 2.5 0 0 0-2.5 2.5v22.5a2.5 2.5 0 0 0 2.5 2.5h27.5a2.5 2.5 0 0 0 2.5-2.5V8.75a2.5 2.5 0 0 0-2.5-2.5Zm0 2.5v16.055l-4.073-4.072a2.5 2.5 0 0 0-3.536 0l-3.125 3.125-6.875-6.875a2.5 2.5 0 0 0-3.535 0L6.25 23.339V8.75h27.5ZM6.25 26.875l8.125-8.125 12.5 12.5H6.25v-4.375Zm27.5 4.375h-3.34l-5.624-5.625L27.91 22.5l5.839 5.84v2.91ZM22.5 15.625a1.875 1.875 0 1 1 3.75 0 1.875 1.875 0 0 1-3.75 0Z" /></svg>
+                                                <span className={`${styles["button-image-upload-indicator"]} ${profileData.profilePicture === "" ? styles["button-image-upload-indicator-purple"] : styles["button-image-upload-indicator-white"]}`}>+ Upload Image</span>
+                                                <input id="image-upload" type="file" ref={imageUploadRef} accept="image/*" onChange={handleImageUpload} className={`hidden`} />
+                                            </div>
+
+                                            <span className={`${styles["dialog-profile-image-indicator"]}`}>Image must be below 1024x1024px. Use PNG or JPG format.</span>
+                                        </div>
+                                    </div>
+
+                                    <div className={`${styles["dialog"]} ${styles["dialog-profile"]} flex flex-fd-c`}>
+                                        <div className={`flex flex-jc-sb flex-ai-c flex-gap-150`} style={{ marginBottom: "1.875rem" }}>
+                                            <label style={{ width: "6.25rem" }} htmlFor="fullName">Full name</label>
+                                            {
+                                                profileData.fullName !== "" ?
+                                                    <input style={{ marginBottom: "0" }} id="fullName" type="text" placeholder="e.g. John" onChange={event => setCurrentFullName(event.target.value)} value={currentFullName} />
+                                                    :
+                                                    <input style={{ marginBottom: "0" }} id="fullName" type="text" placeholder="e.g. John" value={currentFullName} />
+                                            }
+                                        </div>
+
+                                        <div className={`flex flex-jc-sb flex-ai-c flex-gap-150`}>
+                                            <label style={{ width: "6.25rem" }} htmlFor="email">Email</label>
+                                            {
+                                                profileData.email !== "" ?
+                                                    <input style={{ marginBottom: "0" }} id="email" type="email" placeholder="e.g. john@email.com" onChange={event => setCurrentEmail(event.target.value)} value={currentEmail} />
+                                                    :
+                                                    <input style={{ marginBottom: "0" }} id="email" type="email" placeholder="e.g. john@email.com" onChange={event => setCurrentEmail(event.target.value)} value={currentEmail} />
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div className={`flex flex-jc-fe`}>
+                                        <button className={`button button-fill`} type="submit">Save</button>
+                                    </div>
+                                </form>
+                            </>
                     }
                 </div>
             </main>

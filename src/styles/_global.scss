@@ -58,8 +58,16 @@ body {
             gap: 0.9375rem;
         }
 
+        &-30 {
+            gap: 1.875rem;
+        }
+
         &-35 {
             gap: 2.1875rem;
+        }
+
+        &-150 {
+            gap: 9.375rem;
         }
     }
 
@@ -96,6 +104,10 @@ body {
 
 span {
     color: $normal-gray;
+}
+
+a {
+    text-decoration: none;
 }
 
 // Button classes
@@ -183,4 +195,12 @@ select:hover {
 
 option {
     font-size: 1rem;
+}
+
+.no-select {
+    user-select: none;
+}
+
+.hidden {
+    display: none;
 }

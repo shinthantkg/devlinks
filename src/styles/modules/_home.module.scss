@@ -82,6 +82,8 @@ main {
     border: 3px solid $purple;
     border-radius: 100%;
     margin-left: 50%;
+    width: 6.25rem;
+    height: 6.25rem;
     transform: translateX(-50%);
   }
 }
@@ -122,20 +124,6 @@ main {
     }
   }
 
-  &-dialog {
-    background-color: $light-gray;
-    border-radius: 0.625rem;
-    padding: 0.9375rem 1.25rem;
-
-    &:not(:last-of-type) {
-      margin-bottom: 20px;
-    }
-
-    &-remove {
-      cursor: pointer;
-    }
-  }
-
   &-id {
     font-weight: $fw-bold;
   }
@@ -145,8 +133,56 @@ main {
   }
 }
 
+.dialog {
+  background-color: $light-gray;
+  border-radius: 0.625rem;
+  padding: 0.9375rem 1.25rem;
+
+  &:not(:last-of-type) {
+    margin-bottom: 20px;
+  }
+
+  &-remove {
+    cursor: pointer;
+  }
+
+  &-profile {
+    padding: 3.75rem 1.875rem;
+
+    &:not(:last-of-type) {
+      margin-top: 3.125rem;
+    }
+
+    &-image-indicator {
+      width: 13.125rem;
+    }
+  }
+}
+
 .drag-icon {
   margin-right: 0.3125rem;
   position: relative;
   bottom: 0.2188rem;
+}
+
+.button-image-upload {
+  background-color: $purple-hover-color;
+  border-radius: 0.625rem;
+  cursor: pointer;
+  padding-top: 3.125rem;
+  padding-bottom: 3.125rem;
+  width: 12.5rem;
+  height: 12.5rem;
+
+  &-indicator {
+    font-weight: $fw-bold;
+
+    &-purple {
+      color: $purple;
+    }
+
+    &-white {
+      color: $white;
+    }
+  }
 }
