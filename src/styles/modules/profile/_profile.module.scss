@@ -1,0 +1,11 @@
+@import "../../util/variables";
+
+body {
+  background-color: $light-gray;
+}
+
+.header {
+  background-color: $purple;
+  border-radius: 0 0 3.125rem 3.125rem;
+  padding: 3vh 2vw 40vh 2vw;
+}

@@ -1,4 +1,4 @@
-@import "../util/variables";
+@import "../../util/variables";
 
 .container {
   &-home {
@@ -9,9 +9,6 @@
     background-color: $white;
     border: 1px solid $borders;
     border-radius: 20px;
-  }
-
-  &-main {
     padding: 3vw;
   }
 

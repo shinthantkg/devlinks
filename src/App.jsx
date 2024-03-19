@@ -30,14 +30,12 @@ export default function App() {
         {
             path: "/",
             element: isAuthenticated ?
-                <HomeContextProvider>
-                    <Home />
-                </HomeContextProvider>
+                <HomeContextProvider><Home /></HomeContextProvider>
                 : <Auth />
         },
         {
             path: "/profile/:profileId",
-            element: <Profile />
+            element: <HomeContextProvider><Profile /></HomeContextProvider>
         }
     ]);
 

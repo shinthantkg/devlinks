@@ -1,0 +1,27 @@
+@import "../../util/variables";
+
+.card {
+  background-color: $white;
+  box-shadow: -0.0625rem 0.625rem 0.3125rem -0.0625rem hsla(0, 13%, 87%, 0.75);
+  -webkit-box-shadow: -0.0625rem 0.625rem 0.3125rem -0.0625rem hsla(0, 13%, 87%, 0.75);
+  -moz-box-shadow: -0.0625rem 0.625rem 0.3125rem -0.0625rem hsla(0, 13%, 87%, 0.75);
+  border-radius: 0.625rem;
+  padding: 1.875rem 2.5rem;
+  transform: translateY(-50%);
+
+  &-image {
+    border: 0.3125rem solid $purple;
+    border-radius: 100%;
+    width: 9.375rem;
+    height: 9.375rem;
+    margin-bottom: 3.125rem;
+  }
+}
+
+h1 {
+  font-size: 1.875rem;
+}
+
+.link {
+  margin-top: 15px;
+}

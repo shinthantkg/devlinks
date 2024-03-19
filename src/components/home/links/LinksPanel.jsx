@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import LinkDialog from "../../../components/home/links/LinkDialog.jsx";
-import styles from "../../../styles/modules/_home.module.scss";
+import styles from "../../../styles/modules/home/_home.module.scss";
 import illustration from "../../../images/illustrations/illustration-empty.svg";
 
 const LinksPanel = ({ isAddingLinks, setIsAddingLinks, setRerenderFlag, noLinks, saveLinks }) => {

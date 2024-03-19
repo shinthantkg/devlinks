@@ -6,7 +6,7 @@ import Navbar from "../components/shared/Navbar.jsx";
 import ProfileMockup from "../components/home/shared/profile-mockup/ProfileMockup.jsx";
 import LinksPanel from "../components/home/links/LinksPanel.jsx";
 import ProfileDetailsPanel from "../components/home/profile-details/ProfileDetailsPanel.jsx";
-import styles from "../styles/modules/_home.module.scss";
+import styles from "../styles/modules/home/_home.module.scss";
 
 export default function Home() {
     const { setRerenderFlag, page, profileData, setProfileData, saveLinks } = useContext(HomeContext);
@@ -70,7 +70,7 @@ export default function Home() {
 
     return (
         <div className={`${styles["container-home"]}`}>
-            <Navbar />
+            <Navbar pageType="home" />
 
             <main className={`flex flex-gap-35`}>
                 <ProfileMockup />
