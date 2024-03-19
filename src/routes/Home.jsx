@@ -1,12 +1,12 @@
 import { useContext, useEffect, useState } from "react";
 import { HomeContext } from "../contexts/home/HomeContext.jsx";
-import Navbar from "../components/shared/Navbar.jsx";
-import ProfileMockup from "../components/home/shared/profile-mockup/ProfileMockup.jsx";
 import { collection, doc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "../firebase/config.js";
-import styles from "../styles/modules/_home.module.scss";
-import ProfileDetailsForm from "../components/home/profile-details/ProfileDetailsForm.jsx";
+import Navbar from "../components/shared/Navbar.jsx";
+import ProfileMockup from "../components/home/shared/profile-mockup/ProfileMockup.jsx";
 import LinksPanel from "../components/home/links/LinksPanel.jsx";
+import ProfileDetailsPanel from "../components/home/profile-details/ProfileDetailsPanel.jsx";
+import styles from "../styles/modules/_home.module.scss";
 
 export default function Home() {
     const { setRerenderFlag, page, profileData, setProfileData, saveLinks } = useContext(HomeContext);
@@ -80,12 +80,7 @@ export default function Home() {
                         page === 0 ?
                             <LinksPanel isAddingLinks={isAddingLinks} setIsAddingLinks={setIsAddingLinks} setRerenderFlag={setRerenderFlag} noLinks={noLinks} saveLinks={saveLinks} />
                             :
-                            <>
-                                <h1>Profile Details</h1>
-                                <span>Add your details to create a personal touch to your profile.</span>
-
-                                <ProfileDetailsForm profileData={profileData} selectedFullName={selectedFullName} selectedEmail={selectedEmail} setSelectedFullName={setSelectedFullName} setSelectedEmail={setSelectedEmail}  />
-                            </>
+                            <ProfileDetailsPanel profileData={profileData} selectedFullName={selectedFullName} selectedEmail={selectedEmail} setSelectedFullName={setSelectedFullName} setSelectedEmail={setSelectedEmail} />
                     }
                 </div>
             </main>
