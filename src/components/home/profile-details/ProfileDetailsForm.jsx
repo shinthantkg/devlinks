@@ -2,7 +2,7 @@ import { doc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../../../firebase/config";
 import PropTypes from "prop-types";
 import ImageUpload from "./ImageUpload";
-import styles from "../../../styles/modules/_home.module.scss";
+import styles from "../../../styles/modules/home/profile-details/_profile-details-form.module.scss";
 
 const ProfileDetailsForm = ({ profileData, selectedFullName, selectedEmail, setSelectedFullName, setSelectedEmail }) => {
     const handleSaveProfile = event => {
@@ -36,23 +36,23 @@ const ProfileDetailsForm = ({ profileData, selectedFullName, selectedEmail, setS
             <ImageUpload profileData={profileData} />
 
             <div className={`${styles["dialog"]} ${styles["dialog-profile"]} flex flex-fd-c`}>
-                <div className={`flex flex-jc-sb flex-ai-c flex-gap-150`} style={{ marginBottom: "1.875rem" }}>
-                    <label style={{ width: "6.25rem" }} htmlFor="fullName">Full name</label>
+                <div className={`${styles["dialog-profile-field-container"]} flex flex-jc-sb flex-ai-c flex-gap-150`}>
+                    <label className={`${styles["dialog-profile-field-label"]}`} htmlFor="fullName">Full name</label>
                     {
                         profileData.fullName !== "" ?
-                            <input style={{ marginBottom: "0" }} id="fullName" type="text" placeholder="e.g. John" onChange={event => setSelectedFullName(event.target.value)} value={selectedFullName} />
+                            <input className={`${styles["dialog-profile-field-input"]}`} id="fullName" type="text" placeholder="e.g. John" onChange={event => setSelectedFullName(event.target.value)} value={selectedFullName} />
                             :
-                            <input style={{ marginBottom: "0" }} id="fullName" type="text" placeholder="e.g. John" onChange={event => setSelectedFullName(event.target.value)} value={selectedFullName} />
+                            <input className={`${styles["dialog-profile-field-input"]}`} id="fullName" type="text" placeholder="e.g. John" onChange={event => setSelectedFullName(event.target.value)} value={selectedFullName} />
                     }
                 </div>
 
                 <div className={`flex flex-jc-sb flex-ai-c flex-gap-150`}>
-                    <label style={{ width: "6.25rem" }} htmlFor="email">Email</label>
+                    <label className={`${styles["dialog-profile-field-label"]}`} htmlFor="email">Email</label>
                     {
                         profileData.email !== "" ?
-                            <input style={{ marginBottom: "0" }} id="email" type="email" placeholder="e.g. john@email.com" onChange={event => setSelectedEmail(event.target.value)} value={selectedEmail} />
+                            <input className={`${styles["dialog-profile-field-input"]}`} id="email" type="email" placeholder="e.g. john@email.com" onChange={event => setSelectedEmail(event.target.value)} value={selectedEmail} />
                             :
-                            <input style={{ marginBottom: "0" }} id="email" type="email" placeholder="e.g. john@email.com" onChange={event => setSelectedEmail(event.target.value)} value={selectedEmail} />
+                            <input className={`${styles["dialog-profile-field-input"]}`} id="email" type="email" placeholder="e.g. john@email.com" onChange={event => setSelectedEmail(event.target.value)} value={selectedEmail} />
                     }
                 </div>
             </div>

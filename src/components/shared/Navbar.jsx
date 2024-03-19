@@ -2,7 +2,7 @@ import { useContext } from "react";
 import { HomeContext } from "../../contexts/home/HomeContext.jsx";
 import { signOut } from "firebase/auth";
 import { auth } from "../../firebase/config.js";
-import styles from "../../styles/modules/_home.module.scss";
+import styles from "../../styles/modules/shared/_navbar.module.scss";
 import logo from "../../images/logos/logo-devlinks-large.svg";
 
 const Navbar = () => {

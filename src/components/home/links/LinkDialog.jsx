@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import PropTypes from "prop-types";
 import { HomeContext } from "../../../contexts/home/HomeContext.jsx";
-import styles from "../../../styles/modules/_home.module.scss";
+import styles from "../../../styles/modules/home/links/_link-dialog.module.scss";
 import dragIcon from "../../../images/icons/icon-drag-and-drop.svg";
 
 const LinkDialog = ({ id, selectedPlatform, selectedUrl }) => {
@@ -51,8 +51,8 @@ const LinkDialog = ({ id, selectedPlatform, selectedUrl }) => {
         <article className={`flex flex-fd-c ${styles["dialog"]}`}>
             <div className={`flex flex-jc-sb`}>
                 <div>
-                    <span className={`${styles["drag-icon"]}`}><img className={`no-select`} src={dragIcon} alt="" /></span>
-                    <span className={`${styles["link-id"]} no-select`}>Link #{id + 1}</span>
+                    <span className={`${styles["dialog-drag-icon"]}`}><img className={`no-select`} src={dragIcon} alt="" /></span>
+                    <span className={`${styles["dialog-link-id"]} no-select`}>Link #{id + 1}</span>
                 </div>
 
                 <div>
@@ -60,7 +60,7 @@ const LinkDialog = ({ id, selectedPlatform, selectedUrl }) => {
                 </div>
             </div>
 
-            <form onSubmit={event => event.preventDefault} className={`${styles["link-form"]}`}>
+            <form onSubmit={event => event.preventDefault} className={`${styles["dialog-link-form"]}`}>
                 <label htmlFor="link-platform">Platform</label>
                 <select
                     name="link-platform"

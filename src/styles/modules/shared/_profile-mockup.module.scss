@@ -1,0 +1,28 @@
+@import "../../util/variables";
+
+.container {
+  background-color: $white;
+  border: 1px solid $borders;
+  border-radius: 20px;
+  padding: 10vh 9vw;
+}
+
+.mockup {
+  color: $normal-gray;
+  text-align: center;
+  font-size: 0.875rem;
+
+  &-image {
+    border: 0.1875rem solid $purple;
+    border-radius: 100%;
+    margin-left: 50%;
+    width: 6.25rem;
+    height: 6.25rem;
+    transform: translateX(-50%);
+  }
+
+  &-name {
+    color: $dark-gray;
+    font-weight: $fw-semi-bold;
+  }
+}

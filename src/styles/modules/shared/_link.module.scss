@@ -1,0 +1,33 @@
+@import "../../util/variables";
+
+.link {
+  &-rect {
+    background-color: hsl(0, 0%, 93%);
+    border-radius: 0.625rem;
+    width: 14.8125rem;
+    height: 2.75rem;
+    padding: 0.625rem;
+
+    span {
+      color: $white;
+      font-size: 0.875rem;
+    }
+
+    &-facebook,
+    &-twitter {
+      background-color: hsl(214, 89%, 52%);
+    }
+
+    &-instagram {
+      background-color: hsl(333, 68%, 50%);
+    }
+
+    &-youtube {
+      background-color: hsl(352, 92%, 36%);
+    }
+
+    &-github {
+      background-color: hsl(0, 0%, 0%);
+    }
+  }
+}

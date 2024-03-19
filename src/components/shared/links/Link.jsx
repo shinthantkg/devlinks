@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import LinkIcon from "./LinkIcon.jsx";
-import styles from "../../../styles/modules/_home.module.scss";
+import styles from "../../../styles/modules/shared/_link.module.scss";
 
 const Link = ({ linkDialog, validateLink }) => {
     const platforms = {

@@ -1,0 +1,41 @@
+@import "../../../util/variables";
+
+.dialog {
+  background-color: $light-gray;
+  border-radius: 0.625rem;
+  padding: 0.9375rem 1.25rem;
+
+  &:not(:last-of-type) {
+    margin-bottom: 20px;
+  }
+
+  &-drag-icon {
+    margin-right: 0.3125rem;
+    position: relative;
+    bottom: 0.2188rem;
+  }
+
+  &-link-id {
+    font-weight: $fw-bold;
+  }
+
+  &-remove {
+    cursor: pointer;
+  }
+
+  &-link-form {
+    margin-top: 1.25rem;
+  }
+
+  &-profile {
+    padding: 3.75rem 1.875rem;
+
+    &:not(:last-of-type) {
+      margin-top: 3.125rem;
+    }
+
+    &-image-indicator {
+      width: 13.125rem;
+    }
+  }
+}
