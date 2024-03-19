@@ -1,8 +1,8 @@
 import { useContext, useState } from "react";
 import PropTypes from "prop-types";
-import { HomeContext } from "../../contexts/home/HomeContext.jsx";
-import styles from "../../styles/modules/_home.module.scss";
-import dragIcon from "../../images/icons/icon-drag-and-drop.svg";
+import { HomeContext } from "../../../contexts/home/HomeContext.jsx";
+import styles from "../../../styles/modules/_home.module.scss";
+import dragIcon from "../../../images/icons/icon-drag-and-drop.svg";
 
 const LinkDialog = ({ id, selectedPlatform, selectedUrl }) => {
     const { setRerenderFlag, saveLinks } = useContext(HomeContext);

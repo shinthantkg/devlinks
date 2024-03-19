@@ -1,12 +1,14 @@
 import { createContext, useState } from "react";
 import PropTypes from "prop-types";
-import { collection, doc, getDocs,writeBatch } from "firebase/firestore";
+import { collection, doc, getDocs, writeBatch } from "firebase/firestore";
 import { auth, db } from "../../firebase/config.js";
 
 export const HomeContext = createContext();
 
 export const HomeContextProvider = ({ children }) => {
     const setRerenderFlag = useState(false)[1];
+    const [page, setPage] = useState(0);
+    const [profileData, setProfileData] = useState({});
 
     const validateLink = (platform, link) => {
         /**
@@ -97,6 +99,10 @@ export const HomeContextProvider = ({ children }) => {
 
     const contextValue = {
         setRerenderFlag,
+        page,
+        setPage,
+        profileData,
+        setProfileData,
         validateLink,
         formatUrl,
         saveLinks
