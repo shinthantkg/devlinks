@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { auth, googleProvider, db } from "../config/firebase";
+import { auth, googleProvider, db } from "../firebase/config.js";
 import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from "firebase/auth";
 import { collection, query, orderBy, limit, getDoc, setDoc, getDocs, doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import logo from "../images/logos/logo-devlinks-large.svg";
@@ -7,7 +7,7 @@ import googleIcon from "../images/icons/icon-google.svg";
 import styles from "../styles/modules/_auth.module.scss";
 
 export default function Auth() {
-    // ALl the statees for the Auth component.
+    // ALl the states for the Auth component.
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");

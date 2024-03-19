@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { collection, getDocs, query, where, limit } from "firebase/firestore";
-import { db } from "../config/firebase";
+import { db } from "../firebase/config.js";
 import styles from "../styles/modules/_profile.module.scss";
 import facebookIcon from "../images/icons/icon-facebook.svg";
 import instagramIcon from "../images/icons/icon-instagram.svg";

@@ -1,12 +1,13 @@
 /* eslint-disable react/prop-types */
-import { useEffect, useRef, useState } from "react";
-import { signOut } from "firebase/auth";
-import { collection, doc, getDocs, onSnapshot, updateDoc, writeBatch } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { auth, db, storage } from "../config/firebase.js";
+import {useContext, useEffect, useRef, useState} from "react";
+import { HomeContext } from "../contexts/home/HomeContext.jsx";
+import LinkDialog from "../components/home/LinkDialog.jsx";
+import {signOut} from "firebase/auth";
+import {collection, doc, onSnapshot, updateDoc} from "firebase/firestore";
+import {getDownloadURL, ref, uploadBytes} from "firebase/storage";
+import {auth, db, storage} from "../firebase/config.js";
 import styles from "../styles/modules/_home.module.scss";
 import logo from "../images/logos/logo-devlinks-large.svg";
-import dragIcon from "../images/icons/icon-drag-and-drop.svg";
 import facebookIcon from "../images/icons/icon-facebook.svg";
 import instagramIcon from "../images/icons/icon-instagram.svg";
 import twitterIcon from "../images/icons/icon-twitter.svg";
@@ -14,10 +15,9 @@ import youtubeIcon from "../images/icons/icon-youtube.svg";
 import githubIcon from "../images/icons/icon-github.svg";
 
 export default function Home() {
-    // All the states for the Home component.
+    const { setRerenderFlag, validateLink, saveLinks } = useContext(HomeContext);
 
-    /* eslint-disable-next-line no-unused-vars */
-    const [rerenderFlag, setRerenderFlag] = useState(false);
+    // All the states for the home component.
     const [profileData, setProfileData] = useState({});
     const [currentFullName, setCurrentFullName] = useState(null);
     const [currentEmail, setCurrentEmail] = useState(null);
@@ -45,15 +45,13 @@ export default function Home() {
                             if (!linksSnapshot.empty) {
                                 const updatedData = [];
 
-                                // Iterate over link documentssetRerenderFlag(prevFlag => !prevFlag);
+                                // Iterate over link documents
                                 linksSnapshot.forEach(linkSnapshot => {
-                                    const newLinkData = {
+                                    // Update local data array with link data
+                                    updatedData[parseInt(linkSnapshot.id.split("-")[1]) - 1] = {
                                         platform: linkSnapshot.data().platform,
                                         url: linkSnapshot.data().url
                                     };
-
-                                    // Update local data array with link data
-                                    updatedData[parseInt(linkSnapshot.id.split("-")[1]) - 1] = newLinkData;
                                 });
 
                                 // Save updated data array to local storage
@@ -112,93 +110,6 @@ export default function Home() {
             localStorage.setItem("linkDialogs", JSON.stringify([...prevDialogs, newDialogs]));
             setRerenderFlag(prevFlag => !prevFlag);
         }
-    };
-
-    const validateLink = (platform, link) => {
-        /**
-         * Validates a link based on the specified platform.
-         *
-         * @param {string} platform The platform for which the link is being validated (e.g., "github", "instagram").
-         * @param {string} link The link to be validated.
-         * @returns {boolean} Returns true if the link matches the expected pattern for the given platform, otherwise false.
-         */
-
-        // Regular expression patterns for different platforms.
-        const patterns = {
-            github: /^(?:https?:\/\/)?(?:www\.)?github\.com\/[a-zA-Z0-9_-]+\/?$/,
-            instagram: /^(?:https?:\/\/)?(?:www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?$/,
-            twitter: /^(?:https?:\/\/)?(?:www\.)?twitter\.com\/[a-zA-Z0-9_]+\/?$/,
-            youtube: /^(?:https?:\/\/)?(?:www\.)?youtube\.com\/@?[a-zA-Z0-9_-]+\/?$/,
-            facebook: /^(?:https?:\/\/)?(?:www\.)?facebook\.com\/[a-zA-Z0-9.]+\/?$/,
-        };
-
-        const regex = new RegExp(patterns[platform], 'i');
-        return regex.test(link);
-    };
-
-    const formatUrl = url => {
-        // Check if the URL starts with "http", if not, add "https://"
-        if (!url.match(/^https?:\/\//i)) {
-            url = "https://" + url;
-        }
-
-        // Extract the domain from the URL
-        const domainMatch = url.match(/^https?:\/\/(?:www\.)?(.+?)\//i);
-        const domain = domainMatch ? domainMatch[1] : '';
-
-        // Check if the domain is not "github.com", if not, return the original URL
-        if (domain.toLowerCase() !== 'github.com') {
-            return url;
-        }
-
-        // Check if the URL contains "www.", if not, add it after "https://"
-        if (!url.match(/^https?:\/\/www\./i)) {
-            url = url.replace(/^https?:\/\//i, "https://www.");
-        }
-
-        return url;
-    };
-
-    const saveLinks = async () => {
-        const linksCollectionRef = collection(db, `profiles/${auth.currentUser.uid}/links`);
-
-        try {
-            // Batched delete existing documents
-            const linkSnapshots = await getDocs(linksCollectionRef);
-            const batch = writeBatch(db);
-            linkSnapshots.forEach(doc => {
-                batch.delete(doc.ref);
-            });
-            await batch.commit();
-        } catch (error) {
-            console.error("Error deleting existing documents:", error);
-        }
-
-        // Retrieve links from local storage and save them to Firestore
-        const links = JSON.parse(localStorage.getItem("linkDialogs"));
-
-        if (links) {
-            const batch = writeBatch(db);
-            links.forEach((link, index) => {
-                const linkRef = doc(linksCollectionRef, `link-${index + 1}`);
-                if (validateLink(link.platform, link.url)) {
-                    try {
-                        link.url = formatUrl(link.url);
-                        batch.set(linkRef, link);
-                    } catch (error) {
-                        console.error("Error setting document:", error);
-                    }
-                }
-            });
-
-            try {
-                await batch.commit();
-            } catch (error) {
-                console.error("Error committing batch:", error);
-            }
-        }
-
-        setRerenderFlag(prevFlag => !prevFlag);
     };
 
     const handleImageUploadButtonClick = () => {
@@ -297,122 +208,6 @@ export default function Home() {
             .catch(error => {
                 console.error("Error updating profile details: ", error);
             });
-    };
-
-    const LinkDialog = ({ id, selectedPlatform, selectedUrl }) => {
-        // All the states for the LinkDialog component. 
-        const [platform, setPlatform] = useState(selectedPlatform);
-        const [url, setUrl] = useState(selectedUrl);
-
-        const handleDialogFieldsChange = (event, field) => {
-            /**
-             * Handles changes in dialog fields and updates the corresponding data in localStorage.
-            * Also updates state variables if the changed field is "platform" or "url".
-            * @param {Object} event - The event object generated by the field change.
-            * @param {string} field - The field that has been changed ("platform" or "url").
-            */
-
-            const updatedData = JSON.parse(localStorage.getItem("linkDialogs"));
-            updatedData[id][field] = event.target.value;
-            localStorage.setItem("linkDialogs", JSON.stringify(updatedData));
-
-            if (field === "platform") {
-                setPlatform(event.target.value);
-            } else if (field === "url") {
-                setUrl(event.target.value);
-            }
-        };
-
-        const handleDialogRemove = () => {
-            /**
-              * Handles the removal of a dialog.
-              * Deletes the corresponding document from Firestore and updates local storage.
-              */
-
-            const updatedData = JSON.parse(localStorage.getItem("linkDialogs"));
-            updatedData.splice(id, 1);
-            localStorage.setItem("linkDialogs", JSON.stringify(updatedData));
-
-            saveLinks();
-        };
-
-        return (
-            <article className={`flex flex-fd-c ${styles["dialog"]}`}>
-                <div className={`flex flex-jc-sb`}>
-                    <div>
-                        <span className={`${styles["drag-icon"]}`}><img className={`no-select`} src={dragIcon} alt="" /></span>
-                        <span className={`${styles["link-id"]} no-select`}>Link #{id + 1}</span>
-                    </div>
-
-                    <div>
-                        <span className={`${styles["dialog-remove"]}`} onClick={handleDialogRemove}>Remove</span>
-                    </div>
-                </div>
-
-                <form onSubmit={event => event.preventDefault} className={`${styles["link-form"]}`}>
-                    <label htmlFor="link-platform">Platform</label>
-                    <select
-                        name="link-platform"
-                        id="link-platform"
-                        required
-                        onChange={event => { handleDialogFieldsChange(event, "platform"); setRerenderFlag(prevFlag => !prevFlag) }}
-                    >
-                        {
-                            platform === "" ?
-                                <option value="" selected disabled>Select platform</option>
-                                :
-                                <option value="" disabled>Select platform</option>
-                        }
-
-                        {
-                            platform === "facebook" ?
-                                <option value="facebook" selected>Facebook</option>
-                                :
-                                <option value="facebook">Facebook</option>
-                        }
-
-                        {
-                            platform === "instagram" ?
-                                <option value="instagram" selected>Instagram</option>
-                                :
-                                <option value="instagram">Instagram</option>
-                        }
-
-                        {
-                            platform === "twitter" ?
-                                <option value="twitter" selected>Twitter</option>
-                                :
-                                <option value="twitter">Twitter</option>
-                        }
-
-                        {
-                            platform === "youtube" ?
-                                <option value="youtube" selected>YouTube</option>
-                                :
-                                <option value="youtube">YouTube</option>
-                        }
-
-                        {
-                            platform === "github" ?
-                                <option value="github" selected>GitHub</option>
-                                :
-                                <option value="github">GitHub</option>
-                        }
-                    </select>
-
-                    <label htmlFor="link-url">Link</label>
-                    <input
-                        id="link-url"
-                        name="link-url"
-                        type="text"
-                        value={url}
-                        placeholder="e.g. https://www.github.com/shinthantkg"
-                        required
-                        onChange={event => handleDialogFieldsChange(event, "url")}
-                    />
-                </form>
-            </article>
-        );
     };
 
     return (

@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { auth } from "./config/firebase.js";
+import { HomeContextProvider } from "./contexts/home/HomeContext.jsx";
+import { auth } from "./firebase/config.js";
 import Auth from "./routes/Auth.jsx";
 import Home from "./routes/Home.jsx";
 import Profile from "./routes/Profile.jsx";
 
 export default function App() {
-    const [user, setUser] = useState(null);
+    const setUser = useState(null)[1];
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(user => {
@@ -28,7 +29,11 @@ export default function App() {
     const router = createBrowserRouter([
         {
             path: "/",
-            element: isAuthenticated ? <Home /> : <Auth />
+            element: isAuthenticated ?
+                <HomeContextProvider>
+                    <Home />
+                </HomeContextProvider>
+                : <Auth />
         },
         {
             path: "/profile/:profileId",
