@@ -1,8 +1,85 @@
-import { forwardRef } from "react";
+import { useRef } from "react";
+import { doc, updateDoc } from "firebase/firestore";
+import { getDownloadURL, uploadBytes } from "firebase/storage"; 
+import { auth, db, storage } from "../../../firebase/config";
 import PropTypes from "prop-types";
 import styles from "../../../styles/modules/_home.module.scss";
 
-const ImageUpload = forwardRef(({ profileData, handleClick, handleUpload }, ref) => {
+const ImageUpload = ({ profileData }) => {
+    const ref = useRef(null);
+
+    const handleClick = () => {
+        ref.current.click();
+    }
+
+    const handleUpload = () => {
+        /**
+         * Handles the upload of an image file, performs validation, uploads to storage,
+         * and updates the profile picture URL in the Firestore database.
+         * @function handleImageUpload
+         */
+
+        // Get the file object from the file input
+        const file = ref.current.files[0];
+
+        // Extract the file extension from the file name
+        const fileNameParts = file.name.split(".");
+        const fileExtension = fileNameParts[fileNameParts.length - 1];
+
+        // Create a new FileReader instance to read the file contents
+        const reader = new FileReader();
+
+        // Callback function triggered when the file is loaded
+        reader.onload = event => {
+            // Create a new image element
+            const image = new Image();
+            // Set the source of the image to the data URL of the uploaded file
+            image.src = event.target.result;
+
+            // Callback function triggered when the image is loaded
+            image.onload = () => {
+                // Check if the image dimensions are within the specified limit
+                if (image.width <= 1024 && image.height <= 1024) {
+                    // Create a reference to the location where the image will be stored in Firebase Storage
+                    const imageRef = ref(storage, `profilePictures/profile-${auth.currentUser.uid}.${fileExtension}`);
+
+                    // Upload the image file to Firebase Storage
+                    uploadBytes(imageRef, file)
+                        .then(() => {
+                            // Get the download URL of the uploaded image
+                            getDownloadURL(imageRef)
+                                .then(imageUrl => {
+                                    // Get a reference to the user's profile document in Firestore
+                                    const profileDocRef = doc(db, `profiles/${auth.currentUser.uid}`);
+
+                                    // Update the profile picture URL in Firestore
+                                    updateDoc(profileDocRef, {
+                                        "profilePicture": imageUrl
+                                    })
+                                        .then(() => {
+                                            console.log("Successfully updated profile picture!");
+                                        })
+                                        .catch(error => {
+                                            console.error("Error updating profile picture: ", error);
+                                        })
+                                })
+                                .catch(error => {
+                                    console.error("Error getting image URL: ", error);
+                                });
+                        })
+                        .catch(error => {
+                            console.error("Error uploading image: ", error);
+                        });
+                } else {
+                    console.error("Image exceeds the 1024x1024 size limit.");
+                }
+            };
+        };
+
+        // Read the contents of the file as a data URL
+        reader.readAsDataURL(file);
+    };
+
     return (
         <div className={`${styles["dialog"]} ${styles["dialog-profile"]} flex flex-jc-sb flex-ai-c flex-gap-150`}>
             <label htmlFor="image-upload">Profile picture</label>
@@ -18,14 +95,10 @@ const ImageUpload = forwardRef(({ profileData, handleClick, handleUpload }, ref)
             </div>
         </div>
     );
-});
-
-ImageUpload.displayName = "ImageUpload";
+};
 
 ImageUpload.propTypes = {
     profileData: PropTypes.object.isRequired,
-    handleClick: PropTypes.func.isRequired,
-    handleUpload: PropTypes.func.handleUpload
 };
 
 export default ImageUpload;

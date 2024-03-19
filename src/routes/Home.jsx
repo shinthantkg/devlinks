@@ -1,24 +1,21 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { HomeContext } from "../contexts/home/HomeContext.jsx";
 import LinkDialog from "../components/home/links/LinkDialog.jsx";
 import Navbar from "../components/shared/Navbar.jsx";
 import ProfileMockup from "../components/home/shared/profile-mockup/ProfileMockup.jsx";
-import ImageUpload from "../components/home/profile-details/ImageUpload.jsx";
-import { collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { auth, db, storage } from "../firebase/config.js";
+import { collection, doc, onSnapshot } from "firebase/firestore";
+import { auth, db } from "../firebase/config.js";
 import styles from "../styles/modules/_home.module.scss";
+import ProfileDetailsForm from "../components/home/profile-details/ProfileDetailsForm.jsx";
 
 export default function Home() {
     const { setRerenderFlag, page, profileData, setProfileData, saveLinks } = useContext(HomeContext);
 
     // All the states for the home component.
-    const [currentFullName, setCurrentFullName] = useState(null);
-    const [currentEmail, setCurrentEmail] = useState(null);
+    const [selectedFullName, setSelectedFullName] = useState(null);
+    const [selectedEmail, setSelectedEmail] = useState(null);
     const [isAddingLinks, setIsAddingLinks] = useState(false);
     const [noLinks, setNoLinks] = useState(true);
-
-    const imageUploadRef = useRef(null);
 
     useEffect(() => {
         // Listen for changes in authentication state
@@ -30,8 +27,8 @@ export default function Home() {
                 const profileDocUnsubscribe = onSnapshot(doc(db, `profiles/${user.uid}`), profileSnapshot => {
                     if (profileSnapshot.exists()) {
                         setProfileData(profileSnapshot.data());
-                        setCurrentFullName(profileSnapshot.data().fullName);
-                        setCurrentEmail(profileSnapshot.data().email);
+                        setSelectedFullName(profileSnapshot.data().fullName);
+                        setSelectedEmail(profileSnapshot.data().email);
 
                         // Subscribe to links collection changes
                         linksCollectionUnsubscribe = onSnapshot(collection(db, `profiles/${user.uid}/links`), linksSnapshot => {
@@ -94,104 +91,6 @@ export default function Home() {
             localStorage.setItem("linkDialogs", JSON.stringify([...prevDialogs, newDialogs]));
             setRerenderFlag(prevFlag => !prevFlag);
         }
-    };
-
-    const handleImageUploadButtonClick = () => {
-        imageUploadRef.current.click();
-    }
-
-    const handleImageUpload = () => {
-        /**
-         * Handles the upload of an image file, performs validation, uploads to storage,
-         * and updates the profile picture URL in the Firestore database.
-         * @function handleImageUpload
-         */
-
-        // Get the file object from the file input
-        const file = imageUploadRef.current.files[0];
-
-        // Extract the file extension from the file name
-        const fileNameParts = file.name.split(".");
-        const fileExtension = fileNameParts[fileNameParts.length - 1];
-
-        // Create a new FileReader instance to read the file contents
-        const reader = new FileReader();
-
-        // Callback function triggered when the file is loaded
-        reader.onload = event => {
-            // Create a new image element
-            const image = new Image();
-            // Set the source of the image to the data URL of the uploaded file
-            image.src = event.target.result;
-
-            // Callback function triggered when the image is loaded
-            image.onload = () => {
-                // Check if the image dimensions are within the specified limit
-                if (image.width <= 1024 && image.height <= 1024) {
-                    // Create a reference to the location where the image will be stored in Firebase Storage
-                    const imageRef = ref(storage, `profilePictures/profile-${auth.currentUser.uid}.${fileExtension}`);
-
-                    // Upload the image file to Firebase Storage
-                    uploadBytes(imageRef, file)
-                        .then(() => {
-                            // Get the download URL of the uploaded image
-                            getDownloadURL(imageRef)
-                                .then(imageUrl => {
-                                    // Get a reference to the user's profile document in Firestore
-                                    const profileDocRef = doc(db, `profiles/${auth.currentUser.uid}`);
-
-                                    // Update the profile picture URL in Firestore
-                                    updateDoc(profileDocRef, {
-                                        "profilePicture": imageUrl
-                                    })
-                                        .then(() => {
-                                            console.log("Successfully updated profile picture!");
-                                        })
-                                        .catch(error => {
-                                            console.error("Error updating profile picture: ", error);
-                                        })
-                                })
-                                .catch(error => {
-                                    console.error("Error getting image URL: ", error);
-                                });
-                        })
-                        .catch(error => {
-                            console.error("Error uploading image: ", error);
-                        });
-                } else {
-                    console.error("Image exceeds the 1024x1024 size limit.");
-                }
-            };
-        };
-
-        // Read the contents of the file as a data URL
-        reader.readAsDataURL(file);
-    };
-
-    const handleSaveProfile = event => {
-        /**
-         * Handles the saving of profile details to Firestore.
-         * @param {Event} event - The event object representing the form submission.
-         * @function handleSaveProfile
-         */
-
-        // Prevent the default form submission behavior
-        event.preventDefault();
-
-        // Get a reference to the user's profile document in Firestore
-        const profileDocRef = doc(db, `profiles/${auth.currentUser.uid}`);
-
-        // Update the profile details in Firestore
-        updateDoc(profileDocRef, {
-            email: currentEmail,
-            fullName: currentFullName
-        })
-            .then(() => {
-                console.log("Successfully updated profile details.");
-            })
-            .catch(error => {
-                console.error("Error updating profile details: ", error);
-            });
     };
 
     return (
@@ -289,35 +188,7 @@ export default function Home() {
                                 <h1>Profile Details</h1>
                                 <span>Add your details to create a personal touch to your profile.</span>
 
-                                <form onSubmit={handleSaveProfile}>
-                                    <ImageUpload ref={imageUploadRef} profileData={profileData} handleClick={handleImageUploadButtonClick} handleUpload={handleImageUpload} />
-
-                                    <div className={`${styles["dialog"]} ${styles["dialog-profile"]} flex flex-fd-c`}>
-                                        <div className={`flex flex-jc-sb flex-ai-c flex-gap-150`} style={{ marginBottom: "1.875rem" }}>
-                                            <label style={{ width: "6.25rem" }} htmlFor="fullName">Full name</label>
-                                            {
-                                                profileData.fullName !== "" ?
-                                                    <input style={{ marginBottom: "0" }} id="fullName" type="text" placeholder="e.g. John" onChange={event => setCurrentFullName(event.target.value)} value={currentFullName} />
-                                                    :
-                                                    <input style={{ marginBottom: "0" }} id="fullName" type="text" placeholder="e.g. John" value={currentFullName} />
-                                            }
-                                        </div>
-
-                                        <div className={`flex flex-jc-sb flex-ai-c flex-gap-150`}>
-                                            <label style={{ width: "6.25rem" }} htmlFor="email">Email</label>
-                                            {
-                                                profileData.email !== "" ?
-                                                    <input style={{ marginBottom: "0" }} id="email" type="email" placeholder="e.g. john@email.com" onChange={event => setCurrentEmail(event.target.value)} value={currentEmail} />
-                                                    :
-                                                    <input style={{ marginBottom: "0" }} id="email" type="email" placeholder="e.g. john@email.com" onChange={event => setCurrentEmail(event.target.value)} value={currentEmail} />
-                                            }
-                                        </div>
-                                    </div>
-
-                                    <div className={`flex flex-jc-fe`}>
-                                        <button className={`button button-fill`} type="submit">Save</button>
-                                    </div>
-                                </form>
+                                <ProfileDetailsForm profileData={profileData} selectedFullName={selectedFullName} selectedEmail={selectedEmail} setSelectedFullName={setSelectedFullName} setSelectedEmail={setSelectedEmail}  />
                             </>
                     }
                 </div>
