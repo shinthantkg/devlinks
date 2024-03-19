@@ -2,7 +2,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { HomeContext } from "../contexts/home/HomeContext.jsx";
 import LinkDialog from "../components/home/links/LinkDialog.jsx";
 import Navbar from "../components/shared/Navbar.jsx";
-import ProfileMockup from "../components/home/profile-mockup/ProfileMockup.jsx";
+import ProfileMockup from "../components/home/shared/profile-mockup/ProfileMockup.jsx";
 import ImageUpload from "../components/home/profile-details/ImageUpload.jsx";
 import { collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";

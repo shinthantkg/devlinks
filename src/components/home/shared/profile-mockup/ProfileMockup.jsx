@@ -1,7 +1,7 @@
 import { useContext } from "react";
-import { HomeContext } from "../../../contexts/home/HomeContext.jsx";
-import Link from "../../shared/links/Link.jsx";
-import styles from "../../../styles/modules/_home.module.scss";
+import { HomeContext } from "../../../../contexts/home/HomeContext.jsx";
+import Link from "../../../shared/links/Link.jsx";
+import styles from "../../../../styles/modules/_home.module.scss";
 
 const ProfileMockup = () => {
     const { profileData, validateLink } = useContext(HomeContext);
